@@ -49,6 +49,57 @@ Expression::Expression (std::string oprn, Predicate p, std::vector< Expression* 
     operand.expressions = exps;
 }
 
+Table Expression::eval () {
+    Table result;
+    std::vector <size_t> temp;
+    Table temp_table;
+    Schema s;
+    Tuple t;
+
+    switch (operation) {
+        case SELECT:
+            break;
+        case PROJECT:
+            temp.clear ();
+            temp_table = operand.expressions[0] -> eval ();
+            s = temp_table.getSchema ();
+
+            for (auto a : option.col_names) {
+                temp.push_back (s[a].first);
+            }
+
+            for (auto a : temp_table.getTable ()) {
+                t.clear ();
+                for (auto i : temp) {
+                    t.push_back (a[i]);
+                }
+
+                result += t;
+            }
+            break;
+        case RENAME:
+            result = operand.expressions[0] -> eval ();
+
+            result.rename (option.new_name.second);
+            break;
+        case CARTESIAN:
+            break;
+        case NATJOIN:
+            break;
+        case INTERSEC:
+            break;
+        case UNION:
+            break;
+        case SETDIFF:
+            break;
+        case INVALID:
+            result = database[operand.table_names[0]];
+            break;
+    }
+
+    return result;
+}
+
 Expression::~Expression () {
     for (auto a : operand.expressions) {
        delete a;

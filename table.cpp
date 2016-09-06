@@ -22,6 +22,20 @@ Tuple Table::operator[] (size_t idx) {
     return table[idx];
 }
 
+void Table::operator+= (Tuple t) {
+    table.push_back (t);
+}
+
+//TODO: Re-implement, possibly grotesquely buggy!
+void Table::rename (std::vector< std::string > new_names) {
+    for (auto it = schema.begin (); it != schema.end (); ++it) {
+        if (new_names.size () > it -> second.first) {
+            schema[new_names[it -> second.first]] = it -> second;
+            schema.erase(it);
+        }
+    }
+}
+
 void Table::print (void) {
     std::vector< std::string > temp;
 

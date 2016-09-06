@@ -5,6 +5,7 @@
 #include <string>
 
 #include "predicate.hpp"
+#include "ra_pret.hpp"
 
 class Expression {
   private:
@@ -26,6 +27,8 @@ class Expression {
     Expression (std::string oprn, std::vector< Expression* > exps);
     Expression (std::string oprn, std::vector< std::string > optn, std::vector< Expression* > exps);
     Expression (std::string oprn, Predicate p, std::vector< Expression* > exps);
+
+    Table eval ();
 
     ~Expression ();
 };

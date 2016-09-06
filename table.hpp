@@ -21,7 +21,9 @@ class Table {
     Schema getSchema ();
     TableArray getTable ();
     size_t size ();
-    Tuple operator[] (size_t idx);
+    Tuple operator[] (size_t);
+    void operator+= (Tuple);
+    void rename (std::vector< std::string >);
     void print (void);
 };
 
