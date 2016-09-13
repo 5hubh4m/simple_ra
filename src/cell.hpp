@@ -2,15 +2,16 @@
 #define CELL_HPP
 
 #include <string>
+#include <array>
 
 enum Type {
     INTEGER, FLOAT, STRING, INVALID
 };
 
-struct Data {
+union Data {
     int i;
     float f;
-    std::string s;
+    char s[100];
 };
 
 class Cell {
@@ -20,20 +21,20 @@ class Cell {
 
   public:
     Cell ();
-    Cell (int a);
-    Cell (std::string a);
-    Cell (float a);
+    Cell (int);
+    Cell (std::string);
+    Cell (float);
 
     Type getType ();
     Data getVal ();
     std::string show ();
 
-    bool operator== (Cell d);
-    bool operator<= (Cell d);
-    bool operator> (Cell d);
-    bool operator< (Cell d);
-    bool operator!= (Cell d);
-    bool operator>= (Cell d);
+    bool operator== (Cell);
+    bool operator<= (Cell);
+    bool operator> (Cell);
+    bool operator< (Cell);
+    bool operator!= (Cell);
+    bool operator>= (Cell);
 };
 
 #endif

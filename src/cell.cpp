@@ -13,7 +13,12 @@ Cell::Cell (int a) {
 }
 
 Cell::Cell (std::string a) {
-    value.s = a;
+    size_t i;
+    for (i = 0; i < 99 && i < a.length (); i++) {
+        value.s[i] = a[i];
+    }
+
+    value.s[i] = '\0';
     type = STRING;
 }
 
@@ -33,11 +38,11 @@ Data Cell::getVal () {
 std::string Cell::show () {
     switch(type) {
         case INTEGER:
-            return std::to_string(value.i);
+            return std::to_string (value.i);
         case FLOAT:
-            return std::to_string(value.f);
+            return std::to_string (value.f);
         case STRING:
-            return value.s;
+            return std::string (value.s);
         case INVALID:
             return std::string();
     }
@@ -51,10 +56,12 @@ bool Cell::operator== (Cell d) {
             case FLOAT:
                 return value.f == d.getVal().f;
             case STRING:
-                return value.s == d.getVal().s;
+                return std::string (value.s) == std::string (d.getVal().s);
             case INVALID:
                 return false;
         }
+    } else {
+        throw std::runtime_error ("Invalid operation. Type mismatch.");
     }
 
     return false;
@@ -66,12 +73,14 @@ bool Cell::operator<= (Cell d) {
             case INTEGER:
                 return value.i < d.getVal().i || value.i == d.getVal().i;
             case FLOAT:
-                return value.f < d.getVal().f || value.i == d.getVal().i;
+                return value.f < d.getVal().f || value.f == d.getVal().f;
             case STRING:
-                return value.s < d.getVal().s || value.i == d.getVal().i;
+                return std::string (value.s) < std::string (d.getVal().s) || std::string (value.s) == std::string (d.getVal().s);
             case INVALID:
                 return false;
        }
+    } else {
+        throw std::runtime_error ("Invalid operation. Type mismatch.");
     }
 
     return false;
@@ -85,10 +94,12 @@ bool Cell::operator> (Cell d) {
             case FLOAT:
                 return value.f > d.getVal().f;
             case STRING:
-                return value.s > d.getVal().s;
+                return std::string (value.s) > std::string (d.getVal().s);
             case INVALID:
                 return false;
        }
+    } else {
+        throw std::runtime_error ("Invalid operation. Type mismatch.");
     }
 
     return false;
@@ -102,10 +113,12 @@ bool Cell::operator< (Cell d) {
             case FLOAT:
                 return value.f < d.getVal().f;
             case STRING:
-                return value.s < d.getVal().s;
+                return std::string (value.s) < std::string (d.getVal().s);
             case INVALID:
                 return false;
        }
+    } else {
+        throw std::runtime_error ("Invalid operation. Type mismatch.");
     }
 
     return false;
@@ -119,10 +132,12 @@ bool Cell::operator!= (Cell d) {
             case FLOAT:
                 return value.f != d.getVal().f;
             case STRING:
-                return value.s != d.getVal().s;
+                return std::string (value.s) != std::string (d.getVal().s);
             case INVALID:
                 return false;
       }
+    } else {
+        throw std::runtime_error ("Invalid operation. Type mismatch.");
     }
 
     return true;
@@ -134,12 +149,14 @@ bool Cell::operator>= (Cell d) {
             case INTEGER:
                 return value.i > d.getVal().i || value.i == d.getVal().i;
             case FLOAT:
-                return value.f > d.getVal().f || value.i == d.getVal().i;
+                return value.f > d.getVal().f || value.f == d.getVal().f;
             case STRING:
-                return value.s > d.getVal().s || value.i == d.getVal().i;
+                return std::string (value.s) > std::string (d.getVal().s) || std::string (value.s) == std::string (d.getVal().s);
             case INVALID:
                 return false;
        }
+    } else {
+        throw std::runtime_error ("Invalid operation. Type mismatch.");
     }
 
     return false;

@@ -6,8 +6,11 @@
 
 #include "table.hpp"
 
+#define PROMPT "R-ALGEBRA>>> "
+#define QUIT "quit"
+
 typedef std::map< std::string, Table > Database;
 
-Database database;
+extern Database database;
 
 #endif
