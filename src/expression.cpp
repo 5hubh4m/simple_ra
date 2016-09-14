@@ -67,6 +67,14 @@ Expression::Expression (std::string oprn, std::vector< std::string > optn, Expre
     operand.expressions.push_back (e);
 }
 
+Expression::Expression (std::string oprn, std::string optn, Expression* e) {
+    type = COMPOUND;
+    operation = oprn;
+    option.table_name = optn;
+    operand.expressions.push_back (e);
+}
+
+
 Expression::Expression (std::string oprn, Predicate p, Expression* e) {
     type = COMPOUND;
     operation = oprn;
@@ -155,6 +163,10 @@ Table Expression::eval () {
             result = operand.expressions[0] -> eval ();
 
             result.rename (option.col_names);
+        }
+        else if (operation == "ASSIGN") {
+            result = operand.expressions[0] -> eval ();
+            database[option.table_name] = result;
         }
         else if (operation == "X") {}
         else if (operation == "@") {}

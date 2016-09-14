@@ -20,7 +20,8 @@ const std::vector< std::string > operations = {
 const std::vector< std::string > unary = {
     "SELECT",
     "PROJECT",
-    "RENAME"
+    "RENAME",
+    "ASSIGN"
 };
 
 const std::vector< std::string > binary = {

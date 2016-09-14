@@ -1,6 +1,7 @@
 #ifndef EXPRESSION_HPP
 #define EXPRESSION_HPP
 
+#include <iostream>
 #include <vector>
 #include <string>
 
@@ -32,12 +33,14 @@ class Expression {
     struct {
         Predicate bool_exp;
         std::vector< std::string > col_names;
+        std::string table_name;
         Table tuple;
     } option;
 
   public:
     Expression (std::string tname);
     Expression (Table);
+    Expression (std::string, std::string, Expression*);
     Expression (std::string, Expression*, Expression*);
     Expression (std::string, std::vector< std::string >, Expression*);
     Expression (std::string, Predicate p, Expression*);

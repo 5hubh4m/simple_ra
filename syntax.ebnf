@@ -1,0 +1,20 @@
+letter = "a".."z" | "A".."Z";
+identifier = ( letter | "_" ) { letter | digit | "_"  } ;
+digit = "0".."9";
+integer = digit {digit};
+real = integer "." integer;
+string = "\"" {letter} "\"";
+value = real | integer | string;
+comp = "=" | "/=" | "<=" | ">=" | "<" | ">";
+binary = "X" | "U" | "^" | "-" | "@";
+predicate = identifier comp value {"," identifier comp value}
+tuple = "{" identifier ":" value {"," identifier ":" value} "}";
+expression = tuple 
+    | identifier 
+    | "SELECT" "[" predicate "]" "(" expression ")"
+    | "ASSIGN" "[" identifier "]" "(" expression ")"
+    | "PROJECT" "[" identifier {"," identifier} "]" "(" expression ")"
+    | "RENAME" "[" identifier {"," identifier} "]" "(" expression ")"
+    | "(" expression ")" binary "(" expression ")";
+quit = "quit"
+command = ":" (quit)

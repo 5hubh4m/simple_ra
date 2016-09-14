@@ -1,8 +1,4 @@
-#ifdef DEBUG
-
 #include <iostream>
-
-#endif
 
 #include <string>
 #include <vector>
@@ -138,11 +134,9 @@ Table parseTuple(std::string s) {
 }
 
 Predicate parsePredicate (std::string s) {
-#ifdef DEBUG
 
     std::cout << "Parsing: " << s << std::endl;
 
-#endif
 
     Predicate p;
     BoolExpr e;
@@ -198,6 +192,9 @@ Expression* parseExpr (std::string s) {
         if (unary[i] == "SELECT") {
             Predicate p = parsePredicate (s.substr (k + 1, j - k - 1));
             e = new Expression ("SELECT", p, temp);
+        }
+        else if (unary[i] == "ASSIGN") {
+            e = new Expression ("ASSIGN", s.substr (k + 1, j - k - 1), temp);
         }
         else {
             std::vector< std::string > cols;
