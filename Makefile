@@ -1,6 +1,8 @@
 CC = clang++
-CCFLAGS = -g -W -Wall -std=c++14
+CCFLAGS = -W -Wall -std=c++14
 LD = -lreadline
+SRC = src/main.cpp src/simple_parser.cpp src/expression.cpp src/table.cpp src/cell.cpp 
+EXE = simple_ra
 
 .PHONY: clean distclean
 
@@ -10,10 +12,13 @@ clean:
 	rm -f *.o
 
 distclean: clean
-	rm -f *o simple_ra
+	rm -f *o ${EXE}
 
 main: 
-	${CC} ${CCFLAGS} src/main.cpp src/simple_parser.cpp src/expression.cpp src/table.cpp src/cell.cpp -o simple_ra ${LD} 
+	${CC} ${CCFLAGS} ${SRC} -o ${EXE} ${LD} 
+
+debug:
+	${CC} -g ${CCFLAGS} ${SRC} -o ${EXE} ${LD} 
 
 run:
-	./simple_ra
+	./${EXE}
