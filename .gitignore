@@ -2,3 +2,4 @@
 *.dSYM
 simple_ra
 *.o
+*.swp
