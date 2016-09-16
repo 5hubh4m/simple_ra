@@ -1,5 +1,5 @@
-#ifndef SIMPLE_PARSER_HPP
-#define SIMPLE_PARSER_HPP
+#ifndef PARSER_HPP
+#define PARSER_HPP
 
 #include <string>
 #include <vector>
@@ -9,10 +9,10 @@
 #include "expression.hpp"
 
 const std::vector< std::string > operations = {
-    "=",
-    "/=",
-    ">=",
     "<=",
+    ">=",
+    "/=",
+    "=",
     "<",
     ">"
 };
@@ -24,13 +24,13 @@ const std::vector< std::string > unary = {
     "ASSIGN"
 };
 
-const std::vector< std::string > binary = {
-    "X",
-    "U",
-    "-",
-    "^",
-    "v",
-    "@"
+const std::vector< char > binary = {
+    'X',
+    'U',
+    '-',
+    '^',
+    'v',
+    '@'
 };
 
 int is_val (std::string);

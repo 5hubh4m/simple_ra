@@ -5,31 +5,44 @@
 #include "table.hpp"
 #include "expression.hpp"
 #include "simple_ra.hpp"
+#include "parser.hpp"
 
 bool BoolExpr::eval (Schema schema, Tuple tuple) {
-    Cell d1;
+#ifdef DEBUG
+
+    std::cout << id1 << " " << operation << " " << id2 << std::endl;
+
+#endif
+
+    Cell d1, d2;
 
     for (size_t i = 0; i < schema.size (); i++) {
-        if (schema[i].first == id)
+        if (schema[i].first == id1)
             d1 = tuple[i];
+        if (schema[i].first == id2)
+            d2 = tuple[i];
     }
 
     if (d1.getType () == INVALID) {
-        throw std::runtime_error ("Invalid predicate, column not found");
+        d1 = parseCell (id1);
+    }
+
+    if (d2.getType () == INVALID) {
+        d2 = parseCell (id2);
     }
 
     if (operation == "=")
-        return d1 == c;
+        return d1 == d2;
     else if (operation == "/=")
-        return d1 != c;
+        return d1 != d2;
     else if (operation == "<=")
-        return d1 <= c;
+        return d1 <= d2;
     else if (operation == ">=")
-        return d1 >= c;
+        return d1 >= d2;
     else if (operation == "<")
-        return d1 < c;
+        return d1 < d2;
     else if (operation == ">")
-        return d1 > c;
+        return d1 > d2;
 
     return false;
 }
@@ -93,100 +106,58 @@ void Expression::printExpr (void) {
 }
 
 Table Expression::eval () {
-    Table result;
+    Table result, temp;
 
     if (type == SIMPLE) {
-        if (database.find (operand.table_name) == database.end ())
-            throw std::runtime_error ("Table does not exist.");
-
-        result = database[operand.table_name];
+        return database[operand.table_name];
     }
-    else if (type == TUPLE)
-        result = option.tuple;
+    else if (type == TUPLE) {
+        return option.tuple;
+    }
     else {
-        if (operation == "SELECT") {
-            Table tempT = operand.expressions[0] -> eval ();
-            Schema s = tempT.getSchema ();
-
-            result = Table(s);
-
-            for (auto& a : tempT.getTable ()) {
-                if (option.bool_exp.eval (s, a))
-                    result += a;
-            }
+        if (operation == SELECT) {
+            return operand.expressions[0] -> eval ().select (option.bool_exp);
         }
-        else if (operation == "PROJECT") {
-            Table tempT = operand.expressions[0] -> eval ();
-            Schema s = tempT.getSchema ();
-
-            std::vector< size_t > indices;
-
-            for (size_t i = 0; i < s.size (); i++) {
-                bool found = false;
-                for (auto& a : option.col_names) {
-                    if (s[i].first == a) {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    indices.push_back (i);
-                }
-            }
-
-            size_t keep = 0;
-            for (auto& i : indices) {
-                s.erase (s.begin () + i - keep++);
-            }
-
-#ifdef DEBUG
-
-            std::cout << "Erasing columns ";
-            for (auto& a : indices) {
-                std::cout << a << " ";
-            } std::cout << std::endl;
-
-#endif
-            result = Table (s);
-
-            for (auto a : tempT.getTable ()) {
-                size_t keep = 0;
-                for (auto& i : indices) {
-                    a.erase (a.begin () + i - keep++);
-                }
-
-                result += a;
-            }
+        else if (operation == PROJECT) {
+            return operand.expressions[0] -> eval ().project (option.col_names);
         }
-        else if (operation == "RENAME") {
+        else if (operation == RENAME) {
+            return operand.expressions[0] -> eval ().rename (option.col_names);
+        }
+        else if (operation == ASSIGN) {
             result = operand.expressions[0] -> eval ();
-
-            result.rename (option.col_names);
+            database.add_table(option.table_name, result);
         }
-        else if (operation == "ASSIGN") {
+        else if (operation == CARTESIAN) {
             result = operand.expressions[0] -> eval ();
-            database[option.table_name] = result;
-        }
-        else if (operation == "X") {}
-        else if (operation == "@") {}
-        else if (operation == "v") {}
-        else if (operation == "U") {
-            result = operand.expressions[0] -> eval ();
-            Table temp = operand.expressions[1] -> eval ();
+            temp = operand.expressions[1] -> eval ();
 
-            for (auto& a : temp.getTable ()) {
-                result += a;
-            }
+            return result * temp;
         }
-        else if (operation == "-") {
+        else if (operation == NATJOIN) {
             result = operand.expressions[0] -> eval ();
-            Table temp = operand.expressions[1] -> eval ();
+            temp = operand.expressions[1] -> eval ();
 
-            for (auto& a : temp.getTable ()) {
-                result -= a;
-            }
+            return result | temp;
+       }
+        else if (operation == INTERSEC) {
+            result = operand.expressions[0] -> eval ();
+            temp = operand.expressions[1] -> eval ();
+
+            return result ^ temp;
         }
+        else if (operation == UNION) {
+            result = operand.expressions[0] -> eval ();
+            temp = operand.expressions[1] -> eval ();
+
+            return result + temp;
+       }
+        else if (operation == SETDIFF) {
+            result = operand.expressions[0] -> eval ();
+            temp = operand.expressions[1] -> eval ();
+
+            return result - temp;
+       }
     }
 
     return result;

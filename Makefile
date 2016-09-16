@@ -1,24 +1,24 @@
 CC = clang++
 CCFLAGS = -W -Wall -std=c++14
 LD = -lreadline
-SRC = src/main.cpp src/simple_parser.cpp src/expression.cpp src/table.cpp src/cell.cpp 
+SRC = src/simple_ra.cpp src/storage.cpp src/parser.cpp src/expression.cpp src/table.cpp src/cell.cpp 
 EXE = simple_ra
+DEBUG = -D DEBUG -g
 
 .PHONY: clean distclean
 
-all: main
+all: build
 
-clean:
-	rm -f *.o
+clean: distclean
 
-distclean: clean
-	rm -f *o ${EXE}
+distclean:
+	rm -rf *o ${EXE} .data* *.dSYM
 
-main: 
+build: 
 	${CC} ${CCFLAGS} ${SRC} -o ${EXE} ${LD} 
 
 debug:
-	${CC} -g ${CCFLAGS} ${SRC} -o ${EXE} ${LD} 
+	${CC} ${DEBUG} ${CCFLAGS} ${SRC} -o ${EXE} ${LD} 
 
 run:
 	./${EXE}

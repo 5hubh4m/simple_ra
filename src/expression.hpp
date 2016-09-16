@@ -5,11 +5,11 @@
 #include <vector>
 #include <string>
 
+#include "cell.hpp"
 #include "table.hpp"
 
 struct BoolExpr {
-    std::string id, operation;
-    Cell c;
+    std::string id1, operation, id2;
 
     bool eval (Schema, Tuple);
 };
@@ -50,7 +50,8 @@ class Expression {
 
     ~Expression () {
         for (auto& a : operand.expressions) {
-            delete a;
+            if (a != nullptr)
+                delete a;
         }
     }
 };

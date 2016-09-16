@@ -1,3 +1,5 @@
+Formal Syntax for simple_ra
+
 letter = "a".."z" | "A".."Z";
 identifier = ( letter | "_" ) { letter | digit | "_"  } ;
 digit = "0".."9";
@@ -17,4 +19,5 @@ expression = tuple
     | "RENAME" "[" identifier {"," identifier} "]" "(" expression ")"
     | "(" expression ")" binary "(" expression ")";
 quit = "quit"
-command = ":" (quit)
+help = "help"
+command = ":" (quit | help)

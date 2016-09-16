@@ -2,7 +2,6 @@
 
 #include "cell.hpp"
 
-
 Cell::Cell () {
     type = INVALID;
 }
@@ -44,11 +43,11 @@ std::string Cell::show () {
         case STRING:
             return std::string (value.s);
         case INVALID:
-            return std::string();
+            return std::string("null");
     }
 }
 
-bool Cell::operator== (Cell d) {
+bool Cell::operator== (Cell& d) {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -67,7 +66,7 @@ bool Cell::operator== (Cell d) {
     return false;
 }
 
-bool Cell::operator<= (Cell d) {
+bool Cell::operator<= (Cell& d) {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -86,7 +85,7 @@ bool Cell::operator<= (Cell d) {
     return false;
 }
 
-bool Cell::operator> (Cell d) {
+bool Cell::operator> (Cell& d) {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -105,7 +104,7 @@ bool Cell::operator> (Cell d) {
     return false;
 }
 
-bool Cell::operator< (Cell d) {
+bool Cell::operator< (Cell& d) {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -124,7 +123,7 @@ bool Cell::operator< (Cell d) {
     return false;
 }
 
-bool Cell::operator!= (Cell d) {
+bool Cell::operator!= (Cell& d) {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -143,7 +142,7 @@ bool Cell::operator!= (Cell d) {
     return true;
 }
 
-bool Cell::operator>= (Cell d) {
+bool Cell::operator>= (Cell& d) {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:

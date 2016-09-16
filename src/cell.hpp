@@ -29,12 +29,12 @@ class Cell {
     Data getVal ();
     std::string show ();
 
-    bool operator== (Cell);
-    bool operator<= (Cell);
-    bool operator> (Cell);
-    bool operator< (Cell);
-    bool operator!= (Cell);
-    bool operator>= (Cell);
+    bool operator== (Cell&);
+    bool operator<= (Cell&);
+    bool operator> (Cell&);
+    bool operator< (Cell&);
+    bool operator!= (Cell&);
+    bool operator>= (Cell&);
 };
 
 #endif

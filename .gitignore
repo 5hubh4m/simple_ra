@@ -3,3 +3,4 @@
 simple_ra
 *.o
 *.swp
+.data*
