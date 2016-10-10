@@ -25,16 +25,16 @@ class Cell {
     Cell (std::string);
     Cell (float);
 
-    Type getType ();
-    Data getVal ();
-    std::string show ();
+    Type getType () const;
+    Data getVal () const;
+    std::string show () const;
 
-    bool operator== (Cell&);
-    bool operator<= (Cell&);
-    bool operator> (Cell&);
-    bool operator< (Cell&);
-    bool operator!= (Cell&);
-    bool operator>= (Cell&);
+    bool operator == (const Cell&) const;
+    bool operator <= (const Cell&) const;
+    bool operator > (const Cell&) const;
+    bool operator < (const Cell&) const;
+    bool operator != (const Cell&) const;
+    bool operator >= (const Cell&) const;
 };
 
 #endif

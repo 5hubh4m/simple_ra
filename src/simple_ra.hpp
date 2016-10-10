@@ -27,6 +27,19 @@
 #define CARTESIAN "X"
 #define ASSIGN    "ASSIGN"
 
+#define EQ "="
+#define LT "<"
+#define GT ">"
+#define LEQ "<="
+#define GEQ ">="
+#define NEQ "/="
+
+#define MAX "MAX"
+#define MIN "MIN"
+#define SUM "SUM"
+#define AVG "AVG"
+#define COUNT "COUNT"
+
 extern Database database;
 
 std::string rl_gets ();

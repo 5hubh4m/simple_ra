@@ -7,7 +7,7 @@
 #include "simple_ra.hpp"
 #include "parser.hpp"
 
-bool BoolExpr::eval (Schema schema, Tuple tuple) {
+bool BoolExpr::eval (const Schema& schema, const Tuple& tuple) const {
 #ifdef DEBUG
 
     std::cout << id1 << " " << operation << " " << id2 << std::endl;
@@ -31,23 +31,23 @@ bool BoolExpr::eval (Schema schema, Tuple tuple) {
         d2 = parseCell (id2);
     }
 
-    if (operation == "=")
+    if (operation == EQ)
         return d1 == d2;
-    else if (operation == "/=")
+    else if (operation == NEQ)
         return d1 != d2;
-    else if (operation == "<=")
+    else if (operation == LEQ)
         return d1 <= d2;
-    else if (operation == ">=")
+    else if (operation == GEQ)
         return d1 >= d2;
-    else if (operation == "<")
+    else if (operation == LT)
         return d1 < d2;
-    else if (operation == ">")
+    else if (operation == GT)
         return d1 > d2;
 
     return false;
 }
 
-bool Predicate::eval (Schema schema, Tuple tuple) {
+bool Predicate::eval (const Schema& schema, const Tuple& tuple) const {
     for (auto& a : expressions) {
         if (!a.eval (schema, tuple))
             return false;
@@ -56,31 +56,38 @@ bool Predicate::eval (Schema schema, Tuple tuple) {
     return true;
 }
 
-Expression::Expression (std::string tname) {
+Expression::Expression (const std::string& tname) {
     type = SIMPLE;
     operand.table_name = tname;
 }
 
-Expression::Expression (Table t) {
+Expression::Expression (const Table& t) {
     type = TUPLE;
     option.tuple = t;
 }
 
-Expression::Expression (std::string oprn, Expression* e1, Expression* e2) {
+Expression::Expression (const std::string& oprn, Expression* e1, Expression* e2) {
     type = COMPOUND;
     operation = oprn;
     operand.expressions.push_back (e1);
     operand.expressions.push_back (e2);
 }
 
-Expression::Expression (std::string oprn, std::vector< std::string > optn, Expression* e) {
+Expression::Expression (const std::string& oprn, const std::vector< std::string >& optn, Expression* e) {
     type = COMPOUND;
     operation = oprn;
     option.col_names = optn;
     operand.expressions.push_back (e);
 }
 
-Expression::Expression (std::string oprn, std::string optn, Expression* e) {
+Expression::Expression (const std::string& oprn, const std::vector< Aggregate >& optn, Expression* e) {
+    type = COMPOUND;
+    operation = oprn;
+    option.aggregate = optn;
+    operand.expressions.push_back (e);
+}
+
+Expression::Expression (const std::string& oprn, const std::string& optn, Expression* e) {
     type = COMPOUND;
     operation = oprn;
     option.table_name = optn;
@@ -88,14 +95,14 @@ Expression::Expression (std::string oprn, std::string optn, Expression* e) {
 }
 
 
-Expression::Expression (std::string oprn, Predicate p, Expression* e) {
+Expression::Expression (const std::string& oprn, const Predicate& p, Expression* e) {
     type = COMPOUND;
     operation = oprn;
     option.bool_exp = p;
     operand.expressions.push_back (e);
 }
 
-void Expression::printExpr (void) {
+void Expression::printExpr (void) const {
     std::cout << type << " " << operation << std::endl;
 
     for (auto& a : operand.expressions) {
@@ -105,7 +112,7 @@ void Expression::printExpr (void) {
     std::cout << std::endl;
 }
 
-Table Expression::eval () {
+Table Expression::eval () const {
     Table result, temp;
 
     if (type == SIMPLE) {
@@ -115,49 +122,126 @@ Table Expression::eval () {
         return option.tuple;
     }
     else {
-        if (operation == SELECT) {
+        if (operation == SELECT)
             return operand.expressions[0] -> eval ().select (option.bool_exp);
-        }
+
         else if (operation == PROJECT) {
-            return operand.expressions[0] -> eval ().project (option.col_names);
+            if (option.aggregate.empty ())
+                return operand.expressions[0] -> eval ().project (option.col_names);
+            else {
+                temp = operand.expressions[0] -> eval ();
+                Tuple r;
+                Schema s;
+                Cell c;
+
+                for (auto& a : option.aggregate) {
+                    if (a.operation == MIN)
+                        c = temp.min (a.col_name);
+
+                    else if (a.operation == MAX)
+                        c = temp.max (a.col_name);
+
+                    else if (a.operation == SUM)
+                        c = temp.sum (a.col_name);
+
+                    else if (a.operation == AVG)
+                        c = temp.avg (a.col_name);
+
+                    else if (a.operation == COUNT)
+                        c = temp.count (a.col_name, a.value);
+
+                    else
+                        throw std::runtime_error ("Unexpected and unidentified aggregate operation type.");
+
+                    if (a.operation == COUNT)
+                        s.push_back (std::make_pair (a.operation + "(" + a.col_name + ", " + a.value.show () + ")", c.getType ()));
+                    else
+                        s.push_back (std::make_pair (a.operation + "(" + a.col_name + ")", c.getType ()));
+
+                    r.push_back (c);
+                }
+
+                result = Table (s);
+                result += r;
+            }
         }
-        else if (operation == RENAME) {
+
+        else if (operation == RENAME)
             return operand.expressions[0] -> eval ().rename (option.col_names);
-        }
+
         else if (operation == ASSIGN) {
             result = operand.expressions[0] -> eval ();
             database.add_table(option.table_name, result);
         }
-        else if (operation == CARTESIAN) {
-            result = operand.expressions[0] -> eval ();
-            temp = operand.expressions[1] -> eval ();
+        else if (operation == CARTESIAN)
+            return operand.expressions[0] -> eval () * operand.expressions[1] -> eval ();
 
-            return result * temp;
-        }
         else if (operation == NATJOIN) {
-            result = operand.expressions[0] -> eval ();
-            temp = operand.expressions[1] -> eval ();
+            Table t1 = operand.expressions[0] -> eval (),
+                  t2 = operand.expressions[1] -> eval ();
 
-            return result | temp;
-       }
-        else if (operation == INTERSEC) {
-            result = operand.expressions[0] -> eval ();
-            temp = operand.expressions[1] -> eval ();
+            std::vector< std::string > s1, s2, common_attr, proj, rename;
 
-            return result ^ temp;
+            for (auto& a : t1.getSchema ()) {
+                bool same = false;
+
+                for (auto& b : t2.getSchema ()) {
+                    if (a.first == b.first) {
+                        common_attr.push_back (a.first);
+                        s1.push_back (a.first + "1");
+                        proj.push_back (a.first + "1");
+                        same = true;
+                    }
+                }
+
+                if (!same) {
+                    s1.push_back (a.first);
+                    proj.push_back (a.first);
+                }
+
+                rename.push_back (a.first);
+            }
+
+            for (auto& b : t2.getSchema ()) {
+                bool same = false;
+
+                for (auto& a : t1.getSchema ()) {
+                    if (a.first == b.first) {
+                        s2.push_back (a.first + "2");
+                        same = true;
+                    }
+                }
+
+                if (!same) {
+                    s2.push_back (b.first);
+                    proj.push_back (b.first);
+                    rename.push_back (b.first);
+                }
+            }
+
+            Predicate p;
+            BoolExpr e;
+
+            for (auto& a : common_attr) {
+                e.id1 = a + "1";
+                e.id2 = a + "2";
+                e.operation = "=";
+
+                p.expressions.push_back (e);
+            }
+
+            return (((t1.rename (s1) * t2.rename (s2)).select (p)).project (proj)).rename (rename);
         }
-        else if (operation == UNION) {
-            result = operand.expressions[0] -> eval ();
-            temp = operand.expressions[1] -> eval ();
 
-            return result + temp;
-       }
-        else if (operation == SETDIFF) {
-            result = operand.expressions[0] -> eval ();
-            temp = operand.expressions[1] -> eval ();
+        else if (operation == INTERSEC)
+            return operand.expressions[0] -> eval () -
+                (operand.expressions[0] -> eval () - operand.expressions[1] -> eval ());
 
-            return result - temp;
-       }
+        else if (operation == UNION)
+            return operand.expressions[0] -> eval () + operand.expressions[1] -> eval ();
+
+        else if (operation == SETDIFF)
+            return operand.expressions[0] -> eval () - operand.expressions[1] -> eval ();
     }
 
     return result;

@@ -53,7 +53,7 @@ int is_val (std::string a) {
     return 0;
 }
 
-size_t find_unary(std::string s) {
+size_t find_unary(const std::string& s) {
     for (size_t i = 0; i < unary.size (); i++) {
         if (s.substr(0, unary[i].length ()) == unary[i]) {
             return i;
@@ -158,6 +158,69 @@ Table parseTuple(std::string s) {
     return table;
 }
 
+bool hasAgg (const std::vector< std::string >& cols) {
+#ifdef DEBUG
+    for (auto& a : cols)
+        std::cout << "Parsing columns: " << a << std::endl;
+#endif
+
+    size_t num_agg = 0;
+    for (auto& b : cols) {
+        for (auto& a : aggregate) {
+            if (b.substr (0, a.length ()) == a) {
+                num_agg++;
+                break;
+            }
+        }
+    }
+
+    if (num_agg > 0 && num_agg < cols.size ())
+        std::runtime_error ("Invalid expression, can't mix aggregate and non-aggregate in project.");
+
+    if (num_agg > 0)
+        return true;
+
+    return false;
+}
+
+Aggregate parseAgg (std::string s) {
+#ifdef DEBUG
+    std::cout << "Parsing: " << s << std::endl;
+#endif
+
+    Aggregate agg;
+
+    for (auto& a : aggregate) {
+        if (s.substr (0, a.length ()) == a) {
+            agg.operation = a;
+            break;
+        }
+    }
+
+    s = s.substr (agg.operation.length () + 1);
+
+    if (agg.operation == COUNT) {
+        size_t idx = s.find (":");
+        agg.col_name = s.substr (0, idx);
+        agg.value = parseCell (s.substr (idx + 1));
+    }
+    else {
+        agg.col_name = s;
+    }
+
+#ifdef DEBUG
+    std::cout << "Parsed Aggregate: " << agg.operation << " " << agg.col_name;
+
+    if (agg.operation == COUNT)
+        std::cout << " " << agg.value.show ();
+
+    std::cout << std::endl;
+
+#endif
+
+    return agg;
+}
+
 Predicate parsePredicate (std::string s) {
     Predicate p;
     BoolExpr e;
@@ -207,10 +270,22 @@ Expression* parseExpr (std::string s) {
     Expression *e = nullptr;
 
     if (s[0] == '{') {
-        e = new Expression (parseTuple (s));
+        try {
+            e = new Expression (parseTuple (s));
+        }
+        catch (std::exception& exp) {
+            delete e;
+            throw exp;
+        }
     }
     else if (std::islower(s[0])) {
-        e = new Expression (s);
+        try {
+            e = new Expression (s);
+        }
+        catch (std::exception& exp) {
+            delete e;
+            throw exp;
+        }
     }
     else if ((i = find_unary(s)) != std::string::npos) {
         size_t j = s.find ("]"),
@@ -220,10 +295,22 @@ Expression* parseExpr (std::string s) {
 
         if (unary[i] == SELECT) {
             Predicate p = parsePredicate (s.substr (k + 1, j - k - 1));
-            e = new Expression (SELECT, p, temp);
+            try {
+                e = new Expression (SELECT, p, temp);
+            }
+            catch (std::exception& exp) {
+                delete e;
+                throw exp;
+            }
         }
         else if (unary[i] == ASSIGN) {
-            e = new Expression (ASSIGN, s.substr (k + 1, j - k - 1), temp);
+            try {
+                e = new Expression (ASSIGN, s.substr (k + 1, j - k - 1), temp);
+            }
+            catch (std::exception& exp) {
+                delete e;
+                throw exp;
+            }
         }
         else {
             std::vector< std::string > cols;
@@ -250,7 +337,32 @@ Expression* parseExpr (std::string s) {
             } std::cout << std::endl;
 #endif
 
-            e = new Expression (unary[i], cols, temp);
+
+            // If project and aggregate expression is encountered
+            if (unary[i] == PROJECT && hasAgg (cols)) {
+                std::vector< Aggregate > aggregate_options;
+
+                for (auto& a : cols) {
+                    aggregate_options.push_back (parseAgg (a));
+                }
+
+                try {
+                    e =  new Expression (unary[i], aggregate_options, temp);
+                }
+                catch (std::exception& exp) {
+                    delete e;
+                    throw exp;
+                }
+            }
+            else {
+                try {
+                    e =  new Expression (unary[i], cols, temp);
+                }
+                catch (std::exception& exp) {
+                    delete e;
+                    throw exp;
+                }
+            }
         }
     }
     else {
@@ -271,20 +383,26 @@ Expression* parseExpr (std::string s) {
 
         bool found = false;
         for (auto& c : binary) {
-            if (s[i] == c) {
+            if (s.substr (i, 1) == c) {
                 found = true;
                 break;
             }
         }
 
-        if (!found)
+        if (!found) {
             throw std::runtime_error ("Invalid operator " + s.substr(i, 1) + ".");
-
+        }
         else {
             Expression *temp1 = parseExpr (s.substr (1, i - 2)),
                        *temp2 = parseExpr (s.substr (i + 2, s.length () - i - 3));
 
-            e = new Expression (s.substr(i, 1), temp1, temp2);
+            try {
+                e = new Expression (s.substr(i, 1), temp1, temp2);
+            }
+            catch (std::exception& exp) {
+                delete e;
+                throw exp;
+            }
         }
     }
 

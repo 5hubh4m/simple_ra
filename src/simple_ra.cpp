@@ -21,7 +21,7 @@ int main (void) {
               << "* This program is in beta stages. Invalid expressions may *" << std::endl
               << "* result in irrecoverable errors. Please use the grammar  *" << std::endl
               << "* carefully. It is formally described in EBNF form in the *" << std::endl
-              << "* \"syntax.ebnf\". Thank you!                               *" << std::endl
+              << "* file \"syntax.ebnf\". Thank you!                          *" << std::endl
               << "**********************************************************/" << std::endl;
 
     while (true) {

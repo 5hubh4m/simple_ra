@@ -9,13 +9,15 @@ string = "\"" {letter} "\"";
 value = real | integer | string;
 comp = "=" | "/=" | "<=" | ">=" | "<" | ">";
 binary = "X" | "U" | "^" | "-" | "@";
-predicate = identifier comp value {"," identifier comp value}
+predicate = ( identifier | value ) comp ( identifier | value ) {"," ( identifier | value ) comp ( identifier | value )}
 tuple = "{" identifier ":" value {"," identifier ":" value} "}";
+aggregate = "MAX" | "MIN" | "SUM" | "AVG"
 expression = tuple 
     | identifier 
     | "SELECT" "[" predicate "]" "(" expression ")"
     | "ASSIGN" "[" identifier "]" "(" expression ")"
     | "PROJECT" "[" identifier {"," identifier} "]" "(" expression ")"
+    | "PROJECT" "[" ( aggregate ":" identifier ) | ( "COUNT" ":" identifier ":" value ) {"," ( aggregate ":" identifier ) | ( "COUNT" ":" identifier ":" value )} "]" "(" expression ")"
     | "RENAME" "[" identifier {"," identifier} "]" "(" expression ")"
     | "(" expression ")" binary "(" expression ")";
 quit = "quit"

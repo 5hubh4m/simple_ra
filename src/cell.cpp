@@ -26,15 +26,15 @@ Cell::Cell (float a) {
     type = FLOAT;
 }
 
-Type Cell::getType () {
+Type Cell::getType () const {
     return type;
 }
 
-Data Cell::getVal () {
+Data Cell::getVal () const {
     return value;
 }
 
-std::string Cell::show () {
+std::string Cell::show () const {
     switch(type) {
         case INTEGER:
             return std::to_string (value.i);
@@ -47,7 +47,7 @@ std::string Cell::show () {
     }
 }
 
-bool Cell::operator== (Cell& d) {
+bool Cell::operator == (const Cell& d) const {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -66,7 +66,7 @@ bool Cell::operator== (Cell& d) {
     return false;
 }
 
-bool Cell::operator<= (Cell& d) {
+bool Cell::operator <= (const Cell& d) const {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -85,7 +85,7 @@ bool Cell::operator<= (Cell& d) {
     return false;
 }
 
-bool Cell::operator> (Cell& d) {
+bool Cell::operator > (const Cell& d) const {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -104,7 +104,7 @@ bool Cell::operator> (Cell& d) {
     return false;
 }
 
-bool Cell::operator< (Cell& d) {
+bool Cell::operator < (const Cell& d) const {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -123,7 +123,7 @@ bool Cell::operator< (Cell& d) {
     return false;
 }
 
-bool Cell::operator!= (Cell& d) {
+bool Cell::operator != (const Cell& d) const {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:
@@ -142,7 +142,7 @@ bool Cell::operator!= (Cell& d) {
     return true;
 }
 
-bool Cell::operator>= (Cell& d) {
+bool Cell::operator >= (const Cell& d) const {
     if (type == d.getType()) {
         switch (type) {
             case INTEGER:

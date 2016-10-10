@@ -1,5 +1,7 @@
+#!./simple_ra
+
 :drop student
-ASSIGN[student](RENAME[s_roll, f_name, l_name, dept_id]({1, "Shubham", "Chaudhary", 1}))
+ASSIGN[student](RENAME[s_id, f_name, l_name, dept_id]({1, "Shubham", "Chaudhary", 1}))
 ASSIGN[student]((student) U ({2, "Shivam", "Garg", 1}))
 ASSIGN[student]((student) U ({3, "Manish", "Singh", 2}))
 ASSIGN[student]((student) U ({4, "Sourabh", "Rajendu", 1}))
@@ -16,7 +18,11 @@ ASSIGN[student]((student) U ({14, "Himanshu", "Agarwal", 2}))
 ASSIGN[student]((student) U ({15, "Devang", "Kulshresht", 1}))
 
 :drop department
-ASSIGN[department](RENAME[dept_no, dept_name]({1, "CSE"}))
+ASSIGN[department](RENAME[dept_id, dept_name]({1, "CSE"}))
 ASSIGN[department]((department) U ({2, "ECE"}))
+
+SELECT[s_roll > 3](student)
+
+(student) @ (department)
 
 :quit

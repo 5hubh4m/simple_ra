@@ -3,32 +3,32 @@
 #include <string>
 #include <iomanip>
 #include <iostream>
+#include <fstream>
+#include <algorithm>
 #include <set>
 
 #include "table.hpp"
 #include "expression.hpp"
 
-Table::Table (Schema s) {
+Table::Table (const Schema& s) {
     schema = s;
 }
 
-Schema Table::getSchema () {
+Schema Table::getSchema () const {
     return schema;
 }
 
-TableArray Table::getTable () {
-    return table;
-}
-
-size_t Table::size () {
+size_t Table::size () const {
     return table.size ();
 }
 
-bool Table::is_valid (Tuple t) {
+bool Table::is_valid (const Tuple& t) const {
     bool valid = t.size () == schema.size ();
 
-    for (size_t i = 0; i < std::min (t.size (), schema.size ()); i++) {
-        valid = valid && (t[i].getType () == schema[i].second);
+    size_t i = 0;
+
+    for (auto it = t.begin (); i < schema.size () && it != t.end (); i++, ++it) {
+        valid = valid && (it -> getType () == schema[i].second);
 
         if (!valid)
             return false;
@@ -37,110 +37,51 @@ bool Table::is_valid (Tuple t) {
     return true;
 }
 
-
-int Table::is_in (Tuple t) {
-    if (!is_valid (t))
-        throw std::runtime_error ("Incompatible Schema");
-
-    for (size_t i = 0; i < table.size (); i++) {
-        bool equal = true;
-        for (size_t j = 0; j < t.size (); j++) {
-            equal = equal && (t[j] == table[i][j]);
-
-            if (!equal)
-                return -1;
-        }
-        if (equal)
-            return i;
-    }
-
-    return -1;
-}
-
-Tuple Table::operator[] (size_t idx) {
+Tuple Table::operator [] (size_t idx) const {
     if (idx >= table.size ())
-        throw std::runtime_error ("Index size too big");
+        throw std::runtime_error ("Index is too large.");
 
-    return table[idx];
+    auto it = table.begin ();
+
+    while (idx--)
+        ++it;
+
+    return *it;
 }
 
-Table Table::operator+ (Table& t) {
+Table Table::operator + (const Table& t) {
     if (t.size () == 0)
         return (*this);
 
     if (!is_valid (t[0]))
         throw std::runtime_error ("Incompatible Schema");
 
-    for (size_t i = 0; i < t.size (); i++) {
-        if (is_in (t[i]) == -1) {
-            table.push_back (t[i]);
-        }
-    }
+    table.insert (t.begin (), t.end ());
 
     return (*this);
 }
 
-void Table::operator+= (Tuple& t) {
+void Table::operator += (const Tuple& t) {
     if (!is_valid (t))
         throw std::runtime_error ("Incompatible Schema");
 
-    table.push_back (t);
+    table.insert (t);
 }
 
-Table Table::operator- (Table& t) {
+Table Table::operator - (const Table& t) {
     if (t.size () == 0)
         return (*this);
 
     if (!is_valid(t[0]))
         throw std::runtime_error ("Incompatible Schema");
 
-    size_t len = t[0].size ();
-
-    for (size_t j = 0; j < t.size (); j++) {
-        for (auto it = table.begin(); it != table.end ();) {
-            bool equal = true;
-            for (size_t k = 0; k < len; k++) {
-                equal = equal && (t[j][k] == it -> operator[] (k));
-
-                if (!equal)
-                    break;
-            }
-
-            if (equal) {
-                table.erase (it);
-                break;
-            } else {
-                ++it;
-            }
-        }
-    }
+    for (auto& row : t)
+        table.erase (row);
 
     return (*this);
 }
 
-Table Table::operator^ (Table& t) {
-    if (t.size () == 0) {
-        table.clear ();
-    }
-    else {
-        //TODO: Implement this!
-    }
-
-    return (*this);
-}
-
-Table Table::operator| (Table& t) {
-    if (t.size () == 0) {
-        table.clear ();
-    }
-    else {
-        //TODO: Implement this!
-    }
-
-    return (*this);
-}
-
-Table Table::operator* (Table& t) {
+Table Table::operator * (const Table& t) {
     if (t.size () == 0) {
         table.clear ();
         schema.clear ();
@@ -157,71 +98,37 @@ Table Table::operator* (Table& t) {
             schema.push_back (s);
         }
 
-        Tuple ins, temp, tup;
-        for (size_t j = 0; j <  table.size ();) {
-            tup = table[j];
+        Tuple temp;
+        TableArray new_table;
 
-            ins = t[0];
-
-            table[j].insert (table[j].end (), ins.begin (), ins.end ());
-
-#ifdef DEBUG
-            for (auto& a : table[j])
-                std::cout << a.show () << " ";
-            std::cout << std::endl;
-#endif
-
-            j++;
-
-            for (size_t i = 1; i < t.size(); i++) {
-                temp = tup;
-                ins = t[i];
-
-#ifdef DEBUG
-                for (auto& a : temp)
-                    std::cout << a.show () << " ";
-                std::cout << std::endl;
-#endif
-
-                temp.insert (temp.end (), ins.begin (), ins.end ());
-
-#ifdef DEBUG
-                for (auto& a : temp)
-                    std::cout << a.show () << " ";
-                std::cout << std::endl;
-#endif
-
-                table.insert (table.begin () + j, temp);
-
-#ifdef DEBUG
-                std::cout << "Insert successful." << std::endl;
-#endif
-
-                j++;
-
-#ifdef DEBUG
-                std::cout << "Incremented iterator." << std::endl;
-#endif
+        for (auto& row : table) {
+            for (auto& row2 : t) {
+                temp = row;
+                temp.insert (temp.end (), row2.begin (), row2.end ());
+                new_table.insert (temp);
             }
         }
+
+        table = new_table;
     }
 
     return (*this);
 }
 
-Table Table::select (Predicate& p) {
-    for (auto it = table. begin(); it != table.end ();) {
-        if (!p.eval (schema, *it)) {
-            table.erase (it);
-        } else {
-            ++it;
-        }
+Table Table::select (const Predicate& p) {
+    TableArray new_table;
+
+    for (auto& row : table) {
+        if (p.eval (schema, row))
+            new_table.insert (row);
     }
+
+    table = new_table;
 
     return (*this);
 }
 
-Table Table::project (std::vector< std::string >& col_names) {
+Table Table::project (const std::vector< std::string >& col_names) {
     std::vector< size_t > keep_indices;
 
 #ifdef DEBUG
@@ -272,20 +179,31 @@ Table Table::project (std::vector< std::string >& col_names) {
             }
         }
 
-        for (auto& a : table) {
-            size_t key = 0;
+        // Delete the unecessary columns from the table
+
+        Tuple temp;
+        TableArray new_table;
+
+        for (auto& row : table) {
+            temp = row;
+
+            key = 0;
             for (size_t i = 0; i < len; i++) {
                 if (std::find (keep_indices.begin(), keep_indices.end(), i) == keep_indices.end ()) {
-                    a.erase (a.begin () + i - key++);
+                    temp.erase (temp.begin () + i - key++);
                 }
             }
+
+            new_table.insert (temp);
         }
+
+        table = new_table;
     }
 
     return (*this);
 }
 
-Table Table::rename (std::vector< std::string >& new_names) {
+Table Table::rename (const std::vector< std::string >& new_names) {
     if (new_names.size () <= schema.size ()) {
         for (size_t i = 0 ; i < new_names.size (); i++) {
             schema[i].first = new_names[i];
@@ -297,35 +215,217 @@ Table Table::rename (std::vector< std::string >& new_names) {
     return (*this);
 }
 
-void Table::print (void) {
+
+Cell Table::min (const std::string& col) const {
+    if (table.empty ())
+        throw std::runtime_error ("Empty table.");
+
+    size_t idx = 0;
+    for (auto& cols : schema) {
+        if (cols.first == col) {
+            break;
+        }
+
+        idx++;
+    }
+
+    Cell min_elem (table.begin () -> operator [] (idx));
+
+    for (auto& rows : table) {
+        if (rows[idx] < min_elem)
+            min_elem = rows[idx];
+    }
+
+    return min_elem;
+}
+
+Cell Table::max (const std::string& col) const {
+    if (table.empty ())
+        throw std::runtime_error ("Empty table.");
+
+    size_t idx = 0;
+    for (auto& cols : schema) {
+        if (cols.first == col) {
+            break;
+        }
+
+        idx++;
+    }
+
+    Cell max_elem (table.begin () -> operator [] (idx));
+
+    for (auto& rows : table) {
+        if (rows[idx] > max_elem)
+            max_elem = rows[idx];
+    }
+
+    return max_elem;
+}
+
+Cell Table::sum (const std::string& col) const {
+    if (table.empty ())
+        throw std::runtime_error ("Empty table.");
+
+    size_t idx = 0;
+    for (auto& cols : schema) {
+        if (cols.first == col) {
+            break;
+        }
+
+        idx++;
+    }
+
+    Cell c;
+
+    if (schema[idx].second == STRING)
+        throw std::runtime_error ("Invalid operation on data type string.");
+
+    else if (schema[idx].second == INTEGER) {
+        c = Cell (0);
+
+        for (auto& rows : table) {
+            c = c.getVal ().i + rows[idx].getVal ().i;
+        }
+    }
+    else if (schema[idx].second == FLOAT) {
+        c = Cell (0.0f);
+
+        for (auto& rows : table) {
+            c = c.getVal ().f + rows[idx].getVal ().f;
+        }
+    }
+    else
+        throw std::runtime_error ("Unexpected type of cell.");
+
+    return c;
+}
+
+Cell Table::avg (const std::string& col) const {
+    if (table.empty ())
+        throw std::runtime_error ("Empty table.");
+
+    size_t idx = 0;
+    for (auto& cols : schema) {
+        if (cols.first == col) {
+            break;
+        }
+
+        idx++;
+    }
+
+    Cell c;
+
+    if (schema[idx].second == STRING)
+        throw std::runtime_error ("Invalid operation on data type string.");
+
+    else if (schema[idx].second == INTEGER) {
+        c = Cell (0);
+
+        for (auto& rows : table) {
+            c = c.getVal ().i + rows[idx].getVal ().i;
+        }
+
+        c = Cell ((float)((float)c.getVal ().i / table.size ()));
+    }
+    else if (schema[idx].second == FLOAT) {
+        c = Cell (0.0f);
+
+        for (auto& rows : table) {
+            c = c.getVal ().f + rows[idx].getVal ().f;
+        }
+
+        c = Cell ((float)(c.getVal ().f / table.size ()));
+    }
+    else
+        throw std::runtime_error ("Unexpected type of cell.");
+
+    return c;
+}
+
+Cell Table::count (const std::string& col, const Cell& c) const {
+    size_t idx = 0;
+    for (auto& cols : schema) {
+        if (cols.first == col) {
+            break;
+        }
+
+        idx++;
+    }
+
+    size_t count = 0;
+
+    for (auto& rows : table) {
+        if (rows[idx] == c)
+            count++;
+    }
+
+    return Cell((int)count);
+}
+
+void Table::print (void) const {
     if (table.empty ()) {
         std::cout << "Empty table." << std::endl;
         return;
     }
 
+    std::vector< size_t > column_lengths;
+    size_t temp;
 
-    for (size_t i = 0; i < schema.size () * 13; i++)
+    size_t i = 0;
+    for (auto& col : schema) {
+        if (col.second == FLOAT || col.second == INTEGER)
+            column_lengths.push_back (10 > col.first.length () ? 10 : col.first.length ());
+
+        else {
+            size_t len = col.first.length ();
+
+            for (auto& row : table) {
+                temp = strlen (row[i].getVal ().s);
+
+                if (temp > len)
+                    len = temp;
+            }
+
+            column_lengths.push_back (len);
+        }
+
+        ++i;
+    }
+
+    size_t row_len = 0;
+    for (auto& a : column_lengths)
+        row_len += a;
+
+    row_len += column_lengths.size () + 1;
+
+
+    for (size_t i = 0; i < row_len; i++)
         std::cout << "-";
     std::cout << std::endl;
 
+    i = 0;
     std::cout << "|";
     for (auto& a : schema) {
-        std::cout << std::setw (10) << a.first << " | ";
+        std::cout << std::setw (column_lengths[i]) << a.first << "|";
+        ++i;
     } std::cout << std::endl;
 
-    for (size_t i = 0; i < schema.size () * 13; i++)
+    for (size_t i = 0; i < row_len; i++)
         std::cout << "-";
     std::cout << std::endl;
 
 
     for (auto& a : table) {
+        i = 0;
+
         std::cout << "|";
         for (auto& b : a) {
-            std::cout << std::setw (10) << b.show() << " | ";
+            std::cout << std::setw (column_lengths[i]) << b.show() << "|";
+            ++i;
         } std::cout << std::endl;
     }
 
-    for (size_t i = 0; i < schema.size () * 13; i++)
+    for (size_t i = 0; i < row_len; i++)
         std::cout << "-";
     std::cout << std::endl;
 }

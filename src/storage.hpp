@@ -14,9 +14,9 @@ class Database {
   public:
     Database ();
 
-    Table operator[] (std::string&);
-    void add_table (std::string&, Table&);
-    void remove (std::string&);
+    Table operator[] (const std::string&) const;
+    void add_table (const std::string&, const Table&);
+    void remove (const std::string&);
 };
 
 

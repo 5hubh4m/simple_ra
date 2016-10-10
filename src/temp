@@ -1,0 +1,44 @@
+            tup = table[j];
+
+            ins = t[0];
+
+            row.insert (row.end (), ins.begin (), ins.end ());
+
+#ifdef DEBUG
+            for (auto& a : table[j])
+                std::cout << a.show () << " ";
+            std::cout << std::endl;
+#endif
+
+            j++;
+
+            for (size_t i = 1; i < t.size(); i++) {
+                temp = tup;
+                ins = t[i];
+
+#ifdef DEBUG
+                for (auto& a : temp)
+                    std::cout << a.show () << " ";
+                std::cout << std::endl;
+#endif
+
+                temp.insert (temp.end (), ins.begin (), ins.end ());
+
+#ifdef DEBUG
+                for (auto& a : temp)
+                    std::cout << a.show () << " ";
+                std::cout << std::endl;
+#endif
+
+                table.insert (table.begin () + j, temp);
+
+#ifdef DEBUG
+                std::cout << "Insert successful." << std::endl;
+#endif
+
+                j++;
+
+#ifdef DEBUG
+                std::cout << "Incremented iterator." << std::endl;
+#endif
+

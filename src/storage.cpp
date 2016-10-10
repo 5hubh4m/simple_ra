@@ -31,7 +31,7 @@ Database::Database () {
     }
 }
 
-Table Database::operator[] (std::string& s) {
+Table Database::operator[] (const std::string& s) const {
     auto it = std::find (table_list.begin (), table_list.end (), s);
 
     if (it == table_list.end ())
@@ -91,14 +91,16 @@ Table Database::operator[] (std::string& s) {
 
             t.push_back (c);
         }
+
         result += t;
     }
 
     table_file.close ();
+
     return result;
 }
 
-void Database::add_table (std::string& s, Table& t) {
+void Database::add_table (const std::string& s, const Table& t) {
     auto it = std::find (table_list.begin (), table_list.end (), s);
 
     if (it == table_list.end ()) {
@@ -136,7 +138,7 @@ void Database::add_table (std::string& s, Table& t) {
 
     Schema sch = t.getSchema ();
     char str[100];
-    size_t i = sch.size (), j = t.getTable ().size ();
+    size_t i = sch.size (), j = t.size ();
     Type typ;
     Cell c;
 
@@ -175,9 +177,9 @@ void Database::add_table (std::string& s, Table& t) {
 #endif
     }
 
-    for (auto& a : t.getTable ()) {
+    for (auto& row : t) {
         for (size_t j = 0; j < sch.size (); j++) {
-            c = a[j];
+            c = row[j];
             table_file.write ((char*)&c, sizeof (Cell));
 
 #ifdef DEBUG
@@ -189,7 +191,7 @@ void Database::add_table (std::string& s, Table& t) {
     table_file.close ();
 }
 
-void Database::remove (std::string& s) {
+void Database::remove (const std::string& s) {
     auto it = std::find (table_list.begin (), table_list.end (), s);
 
     if (it != table_list.end ()) {
