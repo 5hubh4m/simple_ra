@@ -373,8 +373,11 @@ void Table::print (void) const {
 
     size_t i = 0;
     for (auto& col : schema) {
-        if (col.second == FLOAT || col.second == INTEGER)
-            column_lengths.push_back (10 > col.first.length () ? 10 : col.first.length ());
+        if (col.second == INTEGER)
+            column_lengths.push_back (5 > col.first.length () ? 5 : col.first.length ());
+
+        else if (col.second == FLOAT)
+            column_lengths.push_back (12 > col.first.length () ? 12 : col.first.length ());
 
         else {
             size_t len = col.first.length ();
