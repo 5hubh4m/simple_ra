@@ -259,58 +259,34 @@ Predicate parsePredicate (std::string s) {
     return p;
 }
 
-Expression* parseExpr (std::string s) {
+Expression parseExpr (std::string s) {
 #ifdef DEBUG
     std::cout << "Parsing: " << s << std::endl;
 #endif
+    Expression e;
 
     s.erase (std::remove (s.begin (), s.end (), ' '), s.end ());
 
     size_t i = 0;
-    Expression *e = nullptr;
 
     if (s[0] == '{') {
-        try {
-            e = new Expression (parseTuple (s));
-        }
-        catch (std::exception& exp) {
-            delete e;
-            throw exp;
-        }
+        e = Expression (parseTuple (s));
     }
     else if (std::islower(s[0])) {
-        try {
-            e = new Expression (s);
-        }
-        catch (std::exception& exp) {
-            delete e;
-            throw exp;
-        }
+        e = Expression (s);
     }
     else if ((i = find_unary(s)) != std::string::npos) {
         size_t j = s.find ("]"),
                k = s.find ("[");
 
-        Expression *temp = parseExpr (s.substr (j + 2, s.length () - j - 3));
+        Expression temp = parseExpr (s.substr (j + 2, s.length () - j - 3));
 
         if (unary[i] == SELECT) {
             Predicate p = parsePredicate (s.substr (k + 1, j - k - 1));
-            try {
-                e = new Expression (SELECT, p, temp);
-            }
-            catch (std::exception& exp) {
-                delete e;
-                throw exp;
-            }
+            e = Expression (SELECT, p, temp);
         }
         else if (unary[i] == ASSIGN) {
-            try {
-                e = new Expression (ASSIGN, s.substr (k + 1, j - k - 1), temp);
-            }
-            catch (std::exception& exp) {
-                delete e;
-                throw exp;
-            }
+            e = Expression (ASSIGN, s.substr (k + 1, j - k - 1), temp);
         }
         else {
             std::vector< std::string > cols;
@@ -337,7 +313,6 @@ Expression* parseExpr (std::string s) {
             } std::cout << std::endl;
 #endif
 
-
             // If project and aggregate expression is encountered
             if (unary[i] == PROJECT && hasAgg (cols)) {
                 std::vector< Aggregate > aggregate_options;
@@ -346,22 +321,10 @@ Expression* parseExpr (std::string s) {
                     aggregate_options.push_back (parseAgg (a));
                 }
 
-                try {
-                    e =  new Expression (unary[i], aggregate_options, temp);
-                }
-                catch (std::exception& exp) {
-                    delete e;
-                    throw exp;
-                }
+                e = Expression (unary[i], aggregate_options, temp);
             }
             else {
-                try {
-                    e =  new Expression (unary[i], cols, temp);
-                }
-                catch (std::exception& exp) {
-                    delete e;
-                    throw exp;
-                }
+                e = Expression (unary[i], cols, temp);
             }
         }
     }
@@ -393,21 +356,18 @@ Expression* parseExpr (std::string s) {
             throw std::runtime_error ("Invalid operator " + s.substr(i, 1) + ".");
         }
         else {
-            Expression *temp1 = parseExpr (s.substr (1, i - 2)),
-                       *temp2 = parseExpr (s.substr (i + 2, s.length () - i - 3));
+            Expression temp1 = parseExpr (s.substr (1, i - 2)),
+                       temp2 = parseExpr (s.substr (i + 2, s.length () - i - 3));
 
-            try {
-                e = new Expression (s.substr(i, 1), temp1, temp2);
-            }
-            catch (std::exception& exp) {
-                delete e;
-                throw exp;
-            }
+            e = Expression (s.substr(i, 1), temp1, temp2);
         }
     }
 
-    if (e == nullptr)
-        throw std::runtime_error ("Could not parse expression.");
+#ifdef DEBUG
+
+    e.printExpr ();
+
+#endif
 
     return e;
 }

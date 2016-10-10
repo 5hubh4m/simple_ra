@@ -14,7 +14,7 @@
 Database database;
 
 int main (void) {
-    Expression *exp;
+    Expression exp;
     std::clock_t start;
 
     std::cout << "/**********************************************************" << std::endl
@@ -41,6 +41,9 @@ int main (void) {
                 std::cout << "Deleted relation " << file << " if exists." << std::endl;
                 database.remove (file);
             }
+            else if (line.substr (1, std::string (SHOWALL).length ()) == SHOWALL) {
+                database.info ();
+            }
             else
                 std::cout << "Invalid command." << std::endl;
         }
@@ -48,14 +51,11 @@ int main (void) {
             start = std::clock ();
             try {
                 exp = parseExpr (line);
-                exp -> eval ().print ();
+                exp.eval ().print ();
             }
             catch (std::exception &e) {
                 std::cout << "Error! " << e.what () << std::endl;
             }
-
-            if (exp != nullptr)
-                delete exp;
 
             std::cout << "Query completed. Time taken: "
                 << double(std::clock () - start) / CLOCKS_PER_SEC

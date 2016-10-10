@@ -16,6 +16,7 @@
 #define QUIT "quit"
 #define HELP "help"
 #define DROP "drop"
+#define SHOWALL "showall"
 
 #define SELECT    "SELECT"
 #define PROJECT   "PROJECT"

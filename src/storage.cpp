@@ -224,3 +224,59 @@ void Database::remove (const std::string& s) {
 
     std::remove ((DATA + std::string (".") + s).c_str ());
 }
+
+void Database::info (void) const {
+    std::cout << "The following tables are registered:" << std::endl;
+
+    for (auto& a : table_list) {
+        std::cout << "    - " << a;
+
+        std::ifstream table_file (DATA + std::string (".") + a, std::ios::in | std::ios::binary);
+
+        if (!table_file.is_open ())
+            throw std::runtime_error ("Couldn't open table file for IO.");
+
+        Schema sch;
+        char str[100];
+        size_t i, rows;
+        Type typ;
+        Cell c;
+        Tuple t;
+
+        table_file.read ((char*)&i, sizeof(size_t));
+
+#ifdef DEBUG
+        std::cout << "Read " << i << std::endl;
+#endif
+
+        table_file.read ((char*)&rows, sizeof(size_t));
+
+#ifdef DEBUG
+        std::cout << "Read " << rows << std::endl;
+#endif
+
+        for (size_t j = 0; j < i; j++) {
+            table_file.read ((char*)str, sizeof(char) * 100);
+
+#ifdef DEBUG
+            std::cout << "Read " << str << std::endl;
+#endif
+
+            table_file.read ((char*)&typ, sizeof(Type));
+
+#ifdef DEBUG
+            std::cout << "Read " << typ << std::endl;
+#endif
+
+            sch.push_back (std::make_pair (std::string (str), typ));
+        }
+
+        auto it = sch.begin ();
+        std::cout << " (" << it -> first;
+        ++it;
+        for (; it != sch.end (); ++it) {
+            std::cout << ", " << it ->first;
+        }
+        std::cout << ") : " << rows << " tuples."<< std::endl;
+    }
+}
