@@ -11,6 +11,7 @@ Cell::Cell (int a) {
     type = INTEGER;
 }
 
+// Initialise cell with a string
 Cell::Cell (std::string a) {
     size_t i;
     for (i = 0; i < 99 && i < a.length (); i++) {

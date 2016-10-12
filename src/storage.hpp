@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "table.hpp"
+#include "expression.hpp"
 
 /* Database class
  *
@@ -14,18 +15,23 @@
  */
 class Database {
   private:
-    // List of commisioned tables by name
+    // List of commissioned tables by name
     std::vector< std::string > table_list;
+
+    // List of commissioned views by name
+    std::map< std::string, std::string > views;
 
   public:
     // Construct the database
     Database ();
 
     // Retrieve table by name
-    Table operator[] (const std::string&) const;
+    Table operator [] (const std::string&) const;
 
     // Add table to database
     void add_table (const std::string&, const Table&);
+
+    void add_view (const std::string&, const std::string&);
 
     // Remove table from database
     void remove (const std::string&);

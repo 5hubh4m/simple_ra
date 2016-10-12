@@ -10,6 +10,7 @@
 
 #define DATA   ".data"
 #define SCHEMA "schema"
+#define VIEW  "views"
 #define SYNTAX "syntax.ebnf"
 #define PROMPT "R-ALGEBRA>>> "
 
@@ -27,6 +28,7 @@
 #define NATJOIN   "@"
 #define CARTESIAN "X"
 #define ASSIGN    "ASSIGN"
+#define STORE     "STORE"
 
 #define EQ "="
 #define LT "<"

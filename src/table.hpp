@@ -14,8 +14,9 @@ typedef std::vector< std::pair< std::string, Type > > Schema;
 typedef std::vector< Cell > Tuple;
 typedef std::set< Tuple > TableArray;
 
-// Forward declaration of predicate struct
+// Forward declaration of predicate and aggregate struct
 struct Predicate;
+struct Aggregate;
 
 /* Table class
  *
@@ -33,27 +34,33 @@ class Table {
     Table () {}
     Table (const Schema&);
 
-    Schema getSchema () const;           // Return schema
-    size_t size () const;                // Return size of table
-    bool is_valid (const Tuple&) const;  // Check schema for match.
-    int is_in (const Tuple&) const;      // Check whether tuple is in table.
+    const Schema& getSchema () const;               // Return schema
+    size_t size () const;                           // Return size of table
 
-    Tuple operator [] (size_t) const;    // Get tuple at index
-    Table operator + (const Table&);     // Union
-    Table operator - (const Table&);     // Set difference
-    Table operator * (const Table&);     // Cartesian product
-    void operator += (const Tuple&);     // Add tuple to table
+    bool is_union_compatible (const Tuple&) const;  // Check schema for union
+    bool is_union_compatible (const Table&) const;  // compatibility
+    bool is_union_compatible (const Schema&) const;
+
+    int is_in (const Tuple&) const;                 // Check whether tuple is in table.
+
+    Tuple operator [] (size_t) const;               // Get tuple at index
+    Table operator + (const Table&);                // Union
+    Table operator - (const Table&);                // Set difference
+    Table operator * (const Table&);                // Cartesian product
+    void operator += (const Tuple&);                // Add tuple to table
 
     Table select (const Predicate& p);
     Table project (const std::vector< std::string >&);
     Table rename (const std::vector< std::string >&);
 
     // Implemented aggregate functions
-    Cell max (const std::string&) const;
-    Cell min (const std::string&) const;
-    Cell sum (const std::string&) const;
-    Cell avg (const std::string&) const;
-    Cell count (const std::string&, const Cell&) const;
+    Table max (const std::string&) const;
+    Table min (const std::string&) const;
+    Table sum (const std::string&) const;
+    Table avg (const std::string&) const;
+    Table count (const std::string&, const Cell&) const;
+
+    Table aggregate (const Aggregate&) const;
 
     // Pretty print table
     void print (void) const;

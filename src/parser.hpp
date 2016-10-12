@@ -24,7 +24,8 @@ const std::vector< std::string > unary = {
     SELECT,
     PROJECT,
     RENAME,
-    ASSIGN
+    ASSIGN,
+    STORE
 };
 
 // List of binary operations on table

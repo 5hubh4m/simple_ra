@@ -5,6 +5,7 @@
 
 #include "table.hpp"
 #include "storage.hpp"
+#include "parser.hpp"
 #include "simple_ra.hpp"
 
 Database::Database () {
@@ -29,13 +30,38 @@ Database::Database () {
             table_list.push_back (std::string(temp));
         }
     }
+
+    std::ifstream view_file (DATA + std::string (".") + VIEW, std::ios::in | std::ios::binary);
+
+    size_t n = 0;
+    char s[100], exp[1000];
+
+    view_file.read ((char*) &n, sizeof (size_t));
+
+    for (size_t i = 0; i < n; i++) {
+        view_file.read(s, sizeof (char) * 100);
+        view_file.read(exp, sizeof (char) * 1000);
+
+        views[std::string (s)] = std::string (exp);
+    }
 }
 
-Table Database::operator[] (const std::string& s) const {
+Table Database::operator [] (const std::string& s) const {
     auto it = std::find (table_list.begin (), table_list.end (), s);
+    auto jt = views.find (s);
 
-    if (it == table_list.end ())
-        throw std::runtime_error ("Table " + s + " does not exist.");
+    // If view or table not found
+    if (it == table_list.end () && jt == views.end ())
+        throw std::runtime_error ("Table/View " + s + " does not exist.");
+
+    // If view found
+    else if (jt != views.end ()) {
+        std::string exp = jt -> second;
+        Expression e = parseExpr (exp);
+        return e.eval ();
+    }
+
+    // Else if only table found.
 
     std::ifstream table_file (DATA + std::string (".") + s, std::ios::in | std::ios::binary);
 
@@ -220,63 +246,112 @@ void Database::remove (const std::string& s) {
             std::cout << "Wrote " << temp << std::endl;
 #endif
         }
+
+        db_file.close ();
+        std::remove ((DATA + std::string (".") + s).c_str ());
     }
 
-    std::remove ((DATA + std::string (".") + s).c_str ());
+    if (views.find(s) != views.end ()) {
+        views.erase (s);
+        std::ofstream view_file (DATA + std::string (".") + VIEW, std::ios::out | std::ios::trunc | std::ios::binary);
+
+        size_t n = views.size ();
+
+        view_file.write ((char*) &n, sizeof (size_t));
+
+        for (auto& v : views) {
+            view_file.write(v.first.c_str (), sizeof (char) * 100);
+            view_file.write(v.second.c_str (), sizeof (char) * 1000);
+        }
+    }
+    else
+        views.erase (s);
+}
+
+void Database::add_view (const std::string& s, const std::string& expr) {
+    views[s] = expr;
+
+    std::ofstream view_file (DATA + std::string (".") + VIEW,
+              std::ios::out
+            | std::ios::trunc
+            | std::ios::binary);
+
+    size_t n = views.size ();
+
+    view_file.write ((char*) &n, sizeof (size_t));
+
+    for (auto& v : views) {
+        view_file.write(v.first.c_str (), sizeof (char) * 100);
+        view_file.write(v.second.c_str (), sizeof (char) * 1000);
+    }
 }
 
 void Database::info (void) const {
     std::cout << "The following tables are registered:" << std::endl;
 
+    if (table_list.empty ())
+        std::cout << "None" << std::endl;
+
     for (auto& a : table_list) {
-        std::cout << "    - " << a;
+        if (views.find (a) == views.end ()) {
+            std::cout << "    - " << a;
 
-        std::ifstream table_file (DATA + std::string (".") + a, std::ios::in | std::ios::binary);
+            std::ifstream table_file (DATA + std::string (".") + a, std::ios::in | std::ios::binary);
 
-        if (!table_file.is_open ())
-            throw std::runtime_error ("Couldn't open table file for IO.");
+            if (!table_file.is_open ())
+                throw std::runtime_error ("Couldn't open table file for IO.");
 
-        Schema sch;
-        char str[100];
-        size_t i, rows;
-        Type typ;
-        Cell c;
-        Tuple t;
+            Schema sch;
+            char str[100];
+            size_t i, rows;
+            Type typ;
+            Cell c;
+            Tuple t;
 
-        table_file.read ((char*)&i, sizeof(size_t));
-
-#ifdef DEBUG
-        std::cout << "Read " << i << std::endl;
-#endif
-
-        table_file.read ((char*)&rows, sizeof(size_t));
+            table_file.read ((char*)&i, sizeof(size_t));
 
 #ifdef DEBUG
-        std::cout << "Read " << rows << std::endl;
+            std::cout << "Read " << i << std::endl;
 #endif
 
-        for (size_t j = 0; j < i; j++) {
-            table_file.read ((char*)str, sizeof(char) * 100);
+            table_file.read ((char*)&rows, sizeof(size_t));
 
 #ifdef DEBUG
-            std::cout << "Read " << str << std::endl;
+            std::cout << "Read " << rows << std::endl;
 #endif
 
-            table_file.read ((char*)&typ, sizeof(Type));
+            for (size_t j = 0; j < i; j++) {
+                table_file.read ((char*)str, sizeof(char) * 100);
 
 #ifdef DEBUG
-            std::cout << "Read " << typ << std::endl;
+                std::cout << "Read " << str << std::endl;
 #endif
 
-            sch.push_back (std::make_pair (std::string (str), typ));
+                table_file.read ((char*)&typ, sizeof(Type));
+
+#ifdef DEBUG
+               std::cout << "Read " << typ << std::endl;
+#endif
+
+                sch.push_back (std::make_pair (std::string (str), typ));
+            }
+
+            auto it = sch.begin ();
+            std::cout << " (" << it -> first;
+            ++it;
+            for (; it != sch.end (); ++it) {
+                std::cout << ", " << it ->first;
+            }
+            std::cout << ") : " << rows << " tuples."<< std::endl;
         }
+    }
 
-        auto it = sch.begin ();
-        std::cout << " (" << it -> first;
-        ++it;
-        for (; it != sch.end (); ++it) {
-            std::cout << ", " << it ->first;
-        }
-        std::cout << ") : " << rows << " tuples."<< std::endl;
+    std::cout << "The following views are registered:" << std::endl;
+
+    if (views.empty ())
+        std::cout << "None" << std::endl;
+
+    for (auto& v : views) {
+        std::cout << "    - " << v.first << " : " << v.second << std::endl;
     }
 }

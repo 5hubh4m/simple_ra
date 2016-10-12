@@ -11,18 +11,19 @@
 #include "parser.hpp"
 #include "storage.hpp"
 
+// The global variable for database handling.
 Database database;
 
 int main (void) {
     Expression exp;
     std::clock_t start;
 
-    std::cout << "/**********************************************************" << std::endl
-              << "* This program is in beta stages. Invalid expressions may *" << std::endl
-              << "* result in irrecoverable errors. Please use the grammar  *" << std::endl
-              << "* carefully. It is formally described in EBNF form in the *" << std::endl
-              << "* file \"syntax.ebnf\". Thank you!                          *" << std::endl
-              << "**********************************************************/" << std::endl;
+    //std::cout << "/**********************************************************" << std::endl
+    //          << "* This program is in beta stages. Invalid expressions may *" << std::endl
+    //          << "* result in irrecoverable errors. Please use the grammar  *" << std::endl
+    //          << "* carefully. It is formally described in EBNF form in the *" << std::endl
+    //          << "* file \"syntax.ebnf\". Thank you!                          *" << std::endl
+    //          << "**********************************************************/" << std::endl;
 
     while (true) {
         std::string line = rl_gets ();
@@ -64,6 +65,8 @@ int main (void) {
     }
 }
 
+// libreadline - readline function with error
+// handling and history management
 std::string rl_gets () {
     char *line_read = readline (PROMPT);
     std::string l;
@@ -72,21 +75,22 @@ std::string rl_gets () {
         add_history (line_read);
         l = line_read;
     }
+    else
+        l = std::string (":") + QUIT;
 
     return l;
 }
 
 void print_help (void) {
-    std::cout
-<< "/************************" << std::endl
-<< "* WELCOME TO simple_ra! *" << std::endl
-<< "************************/" << std::endl << std::endl
+    std::cout << "/************************" << std::endl
+              << "* WELCOME TO simple_ra! *" << std::endl
+              << "************************/" << std::endl << std::endl
 
-<< "simple_ra is a basic implementation of formal relational algebra type quer"
-<< "y language. It contains support for all of the basic RA operations. The fo"
-<< "mal syntax is defined below in EBNF." << std::endl << std::endl
-<< "**********************************************************" << std::endl
-<< std::endl;
+              << "simple_ra is a basic implementation of formal relational algebra type quer"
+              << "y language. It contains support for all of the basic RA operations. The fo"
+              << "mal syntax is defined below in EBNF." << std::endl << std::endl
+              << "**********************************************************" << std::endl
+              << std::endl;
 
     std::string temp;
     std::ifstream syntax (SYNTAX, std::ios::in);
@@ -97,11 +101,9 @@ void print_help (void) {
         }
     }
 
-    std::cout
-<< "**********************************************************" << std::endl
-<< std::endl
-<< "Hope this helped you! For more details, have a look at the source code." << std::endl;
+    std::cout << "**********************************************************" << std::endl
+              << std::endl
+              << "Hope this helped you! For more details, have a look at the source code." << std::endl;
 
     syntax.close ();
 }
-

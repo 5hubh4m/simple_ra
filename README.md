@@ -5,7 +5,28 @@ A simple implementation of Relational Algebra.
 Go to the directory, and just use `make` to compile and `./simple_ra` to run.
 
 ### Syntax
-The syntax is totally inspired from pure RA. However, to make it easier to type using an ASCII keyboard, some changes have been made. Example queries have been given below. 
+The syntax is totally inspired from pure RA. However, to make it easier to type using an ASCII
+keyboard, some changes have been made. Below is a brief description of the syntax.
+
+* `SELECT [Predicate] (Expression)` : Select using a predicate from expression
+
+* `PROJECT [List of columns / Aggregate functions] (Expression)` : Project said columns from the expression
+
+* `ASSIGN [View name] (Expression)` : Create a view with the given name
+
+* `STORE [Table name] (Expression)` : Store the relation with the given name in the database
+
+* `(Expression) X (Expression)` : Cartesian product
+
+* `(Expression) U (Expression)` : Union
+
+* `(Expression) ^ (Expression)` : Intersection
+
+* `(Expression) @ (Expression)` : Natural join
+
+* `(Expression) - (Expression)` : Set difference
+
+Some example queries have been given below. 
 
 `ASSIGN[student](RENAME[s_id, f_name, l_name, dept_id]({1, "Shubham", "Chaudhary", 1}))`
 
@@ -17,7 +38,7 @@ The syntax is totally inspired from pure RA. However, to make it easier to type 
 
 `(student) @ (department)`
 
-Other queries have been given in file `queries.sra`.
+Other queries have been given in file `queries.sra`. Formal syntax is defined in EBNF form in `syntax.ebnnf`.
 
 ### Helper Commands
 The following utility commands are available

@@ -65,7 +65,7 @@ class Expression {
         Predicate bool_exp;
         std::vector< std::string > col_names;
         std::vector< Aggregate > aggregate;
-        std::string table_name;
+        std::string table_name, expression;
         Table tuple;
     } option;
 
@@ -75,6 +75,7 @@ class Expression {
     Expression (const std::string& tname);
     Expression (const Table&);
     Expression (const std::string&, const std::string&, Expression);
+    Expression (const std::string&, const std::string&, const std::string&);
     Expression (const std::string&, Expression, Expression);
     Expression (const std::string&, const std::vector< std::string >&, Expression);
     Expression (const std::string&, const std::vector< Aggregate >&, Expression);

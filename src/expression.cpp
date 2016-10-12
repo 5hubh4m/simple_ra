@@ -94,6 +94,12 @@ Expression::Expression (const std::string& oprn, const std::string& optn, Expres
     operand.expressions.push_back (e);
 }
 
+Expression::Expression (const std::string& oprn, const std::string& optn, const std::string& expr) {
+    type = COMPOUND;
+    operation = oprn;
+    option.table_name = optn;
+    option.expression = expr;
+}
 
 Expression::Expression (const std::string& oprn, const Predicate& p, Expression e) {
     type = COMPOUND;
@@ -130,39 +136,18 @@ Table Expression::eval () const {
                 return operand.expressions[0].eval ().project (option.col_names);
             else {
                 temp = operand.expressions[0].eval ();
-                Tuple r;
-                Schema s;
-                Cell c;
 
-                for (auto& a : option.aggregate) {
-                    if (a.operation == MIN)
-                        c = temp.min (a.col_name);
+                if (!option.aggregate.empty ()) {
 
-                    else if (a.operation == MAX)
-                        c = temp.max (a.col_name);
+                    auto it = option.aggregate.begin ();
 
-                    else if (a.operation == SUM)
-                        c = temp.sum (a.col_name);
+                    result = temp.aggregate (*it);
+                    ++it;
 
-                    else if (a.operation == AVG)
-                        c = temp.avg (a.col_name);
-
-                    else if (a.operation == COUNT)
-                        c = temp.count (a.col_name, a.value);
-
-                    else
-                        throw std::runtime_error ("Unexpected and unidentified aggregate operation type.");
-
-                    if (a.operation == COUNT)
-                        s.push_back (std::make_pair (a.operation + "(" + a.col_name + ", " + a.value.show () + ")", c.getType ()));
-                    else
-                        s.push_back (std::make_pair (a.operation + "(" + a.col_name + ")", c.getType ()));
-
-                    r.push_back (c);
+                    for (; it != option.aggregate.end (); ++it) {
+                        result = result * temp.aggregate (*it);
+                    }
                 }
-
-                result = Table (s);
-                result += r;
             }
         }
 
@@ -170,6 +155,10 @@ Table Expression::eval () const {
             return operand.expressions[0].eval ().rename (option.col_names);
 
         else if (operation == ASSIGN) {
+            result = parseExpr (option.expression).eval ();
+            database.add_view(option.table_name, option.expression);
+        }
+        else if (operation == STORE) {
             result = operand.expressions[0].eval ();
             database.add_table(option.table_name, result);
         }

@@ -285,8 +285,11 @@ Expression parseExpr (std::string s) {
             Predicate p = parsePredicate (s.substr (k + 1, j - k - 1));
             e = Expression (SELECT, p, temp);
         }
+        else if (unary[i] == STORE) {
+            e = Expression (unary[i], s.substr (k + 1, j - k - 1), temp);
+        }
         else if (unary[i] == ASSIGN) {
-            e = Expression (ASSIGN, s.substr (k + 1, j - k - 1), temp);
+            e = Expression (unary[i], s.substr (k + 1, j - k - 1), s.substr (j + 2, s.length () - j - 3));
         }
         else {
             std::vector< std::string > cols;

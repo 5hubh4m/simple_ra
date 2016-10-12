@@ -16,6 +16,7 @@ expression = tuple
     | identifier 
     | "SELECT" "[" predicate "]" "(" expression ")"
     | "ASSIGN" "[" identifier "]" "(" expression ")"
+    | "STORE" "[" identifier "]" "(" expression ")"
     | "PROJECT" "[" identifier {"," identifier} "]" "(" expression ")"
     | "PROJECT" "[" ( aggregate ":" identifier ) | ( "COUNT" ":" identifier ":" value ) {"," ( aggregate ":" identifier ) | ( "COUNT" ":" identifier ":" value )} "]" "(" expression ")"
     | "RENAME" "[" identifier {"," identifier} "]" "(" expression ")"
