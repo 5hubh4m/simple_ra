@@ -39,7 +39,9 @@ Some example queries have been given below.
 `(student) @ (department)`
 
 `STORE[marks](RENAME[s_id, eng, phy]({1, 98.0, 95.0}))`
+
 `STORE[marks]((marks) U ({2, 89.0, 99.0}))`
+
 `STORE[marks]((marks) U ({3, 98.1, 92.0}))`
 
 `PROJECT[MIN : eng](marks)`
