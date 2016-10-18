@@ -23,4 +23,6 @@ expression = tuple
     | "(" expression ")" binary "(" expression ")";
 quit = "quit"
 help = "help"
-command = ":" (quit | help)
+show all = "showall"
+drop = "drop"
+command = ":" (quit | help | showall | drop identifier)

@@ -38,6 +38,18 @@ Some example queries have been given below.
 
 `(student) @ (department)`
 
+`STORE[marks](RENAME[s_id, eng, phy]({1, 98.0, 95.0}))`
+`STORE[marks]((marks) U ({2, 89.0, 99.0}))`
+`STORE[marks]((marks) U ({3, 98.1, 92.0}))`
+
+`PROJECT[MIN : eng](marks)`
+
+`ASSIGN[min_eng](PROJECT[s_id]((marks) @ (RENAME[s_id, eng]((PROJECT[s_id](marks)) X (PROJECT[MIN : eng](marks))))))`
+
+__Explanation__: It selects the `s_id` of the student with minimum marks in `english`. It then takes it's cartesian product with a column of `s_id`s and natural joins it with marks table to obtain the `s_id` of student with minimum marks in english. It then assigns the `min_eng` with the view.
+
+`((student) @ (min_eng)) @ (department)` will give all the details of the student with minimum marks in english. 
+
 Other queries have been given in file `queries.sra`. Formal syntax is defined in EBNF form in `syntax.ebnnf`.
 
 ### Helper Commands
@@ -49,7 +61,10 @@ The following utility commands are available
 
 > `:drop <table>` : Drop the table with specified name
 
-> `:showall` : Show the basic information of the whole database
+> `:showall` : Show the basic information of the whole database, i.e the schema and no. of tuples of all tables and description of all views.
 
-### Errors
+### Precautions
 There have been efforts to increase the code's coverage using runtime exception handling, as a result of which the software is pretty robust. However, there might be some corner cases where the code breaks. Sorry for the inconvenience. To help debugging easier, you can enable informative outputs embedded throughout the codes by using `make debug` while compiling.
+
+Still, here is a list of identified causes of errors:
+* Using `ASSIGN` or `STORE` inside itself, and referring to itself. Like `ASSIGN[hello](PROJECT[id](ASSIGN[hello](hi)))` may cause errors. But they will be caught and reported.
