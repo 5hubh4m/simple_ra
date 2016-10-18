@@ -2,15 +2,41 @@
 A simple implementation of Relational Algebra.
 
 ### Compiling and running
-Go to the directory, and just use `make` to compile and `./simple_ra` to run.
+Go to the directory, and just use `make` to compile and `./simple_ra` or `make run` to run. The package `libreadline` (`libreadline-devel` or `libreadline-dev`) is required to compile and run the program. You can install it using the package manager of your operating system.
 
 ### Syntax
 The syntax is totally inspired from pure RA. However, to make it easier to type using an ASCII
 keyboard, some changes have been made. Below is a brief description of the syntax.
 
-* `SELECT [Predicate] (Expression)` : Select using a predicate from expression
+* `table_name` : Displays whole view/table from a view/table named `table_name`
 
-* `PROJECT [List of columns / Aggregate functions] (Expression)` : Project said columns from the expression
+* `SELECT [Predicate] (Expression)` : Select using a predicate from expression. Predicate is a list of elementary boolean expressions. The following predcate expressiona are valid
+
+>`value > value`
+
+>`value >= value`
+
+>`value < value`
+
+>`value <= value`
+
+>`value = value`
+
+>`value /= value`
+
+Here, a `value` is either a column name or a value. Operating on 2 values of different `type` will result in an error.
+
+* `PROJECT [List of columns / Aggregate functions] (Expression)` : Project said columns from the expression, including the following aggregate functions
+
+>`MAX : column name`
+
+>`MIN : column name`
+
+>`SUM : column name`, here column name should be of numeric type
+
+>`AVG : column name`, here column name should be of numeric type
+
+>`COUNT : column name : value`
 
 * `ASSIGN [View name] (Expression)` : Create a view with the given name
 
@@ -26,7 +52,9 @@ keyboard, some changes have been made. Below is a brief description of the synta
 
 * `(Expression) - (Expression)` : Set difference
 
-Some example queries have been given below. 
+###Example
+
+Some example queries have been given below.
 
 `ASSIGN[student](RENAME[s_id, f_name, l_name, dept_id]({1, "Shubham", "Chaudhary", 1}))`
 
@@ -34,7 +62,7 @@ Some example queries have been given below.
 
 `ASSIGN[department](RENAME[dept_id, dept_name]({1, "Computer"}))`
 
-`SELECT[s_id > 3](student)`
+`SELECT[s_id > 3, f_name /= "Shubham"](student)`
 
 `(student) @ (department)`
 
@@ -50,9 +78,9 @@ Some example queries have been given below.
 
 __Explanation__: It selects the `s_id` of the student with minimum marks in `english`. It then takes it's cartesian product with a column of `s_id`s and natural joins it with marks table to obtain the `s_id` of student with minimum marks in english. It then assigns the `min_eng` with the view.
 
-`((student) @ (min_eng)) @ (department)` will give all the details of the student with minimum marks in english. 
+`((student) @ (min_eng)) @ (department)` will give all the details of the student with minimum marks in english. The result of the query will change in accordance with the original data.
 
-Other queries have been given in file `queries.sra`. Formal syntax is defined in EBNF form in `syntax.ebnnf`.
+Other queries have been given in file `queries.sra`. Formal syntax is defined in EBNF form in `syntax.ebnf`.
 
 ### Helper Commands
 The following utility commands are available

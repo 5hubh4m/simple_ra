@@ -46,6 +46,8 @@ std::string Cell::show () const {
         case INVALID:
             return std::string("null");
     }
+
+    return std::string ("null");
 }
 
 bool Cell::operator == (const Cell& d) const {

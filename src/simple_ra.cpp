@@ -1,8 +1,9 @@
 #include <iostream>
 #include <string>
+#include <ctime>
+
 #include <readline/readline.h>
 #include <readline/history.h>
-#include <ctime>
 
 #include "simple_ra.hpp"
 #include "cell.hpp"

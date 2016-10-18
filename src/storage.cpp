@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <cstring>
+#include <algorithm>
 
 #include "table.hpp"
 #include "storage.hpp"

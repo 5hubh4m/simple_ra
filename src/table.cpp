@@ -449,25 +449,16 @@ void Table::print (void) const {
 
     size_t i = 0;
     for (auto& col : schema) {
-        if (col.second == INTEGER)
-            column_lengths.push_back (5 > col.first.length () ? 5 : col.first.length ());
+        size_t len = col.first.length ();
 
-        else if (col.second == FLOAT)
-            column_lengths.push_back (12 > col.first.length () ? 12 : col.first.length ());
+        for (auto& row : table) {
+            temp = strlen (row[i].getVal ().s);
 
-        else {
-            size_t len = col.first.length ();
-
-            for (auto& row : table) {
-                temp = strlen (row[i].getVal ().s);
-
-                if (temp > len)
-                    len = temp;
-            }
-
-            column_lengths.push_back (len);
+            if (temp > len)
+                len = temp;
         }
 
+        column_lengths.push_back (len);
         ++i;
     }
 

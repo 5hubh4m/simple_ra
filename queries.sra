@@ -22,5 +22,5 @@ STORE[marks]((marks) U ({5, 89.0, 99.0}))
 ASSIGN[min_eng](PROJECT[s_id]((marks) @ (RENAME[s_id, eng]((PROJECT[s_id](marks)) X (PROJECT[MIN : eng](marks))))))
 SELECT[s_id > 3](student)
 (student) @ (department)
-min_eng
+((min_eng) @ (student)) @ (department)
 :quit
