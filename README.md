@@ -98,3 +98,8 @@ There have been efforts to increase the code's coverage using runtime exception 
 
 Still, here is a list of identified causes of errors:
 * Using `ASSIGN` or `STORE` inside itself, and referring to itself. Like `ASSIGN[hello](PROJECT[id](ASSIGN[hello](hi)))` may cause errors. But they will be caught and reported.
+
+### Caveats
+* The maximum length of any `string`(`identifier` or `value`) is `100 bytes`.
+* Because of the bad parser function, `string`s cannot have spaces. `Hello, world.` will become `Hello, world.`. Also, there are no escape characters.
+* `null` value is parsed but other functionality like evaluation or aggregate query handling is not implemented.
