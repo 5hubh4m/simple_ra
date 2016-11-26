@@ -436,7 +436,7 @@ bool negate(std::istream& in) {
     }
 }
 
-Bool(BasicPredicate*) compexp(std::istream& in) {
+Bool(BasicPredicate*) comp_exp(std::istream& in) {
     Bool(std::string) i1, i2;
     Bool(Cell) c1, c2;
     Bool(ComparisionOperation) op;
@@ -475,7 +475,8 @@ Bool(BasicPredicate*) compexp(std::istream& in) {
 }
 
 Bool(Predicate*) predicate(std::istream& in) {
-    Bool(Predicate*) p;
+    Bool(Predicate*) p, p2;
+    Bool(BooleanOperation) op;
 
     if (negate(in)) {
         space(in);
@@ -486,13 +487,28 @@ Bool(Predicate*) predicate(std::istream& in) {
             throw ParseError();
         }
     } else if (in.peek() == '(') {
+        in.get();
         space(in);
 
         if ((p = predicate(in)).first) {
             space(in);
 
             if (in.get() == ')') {
-                return p;
+                space(in);
+                
+                if ((op = boolean(in)).first) {
+                    space(in);
+                    
+                    if ((p2 = predicate(in)).first) {
+                        return Pair(true, new BinaryPredicate(p.second, op.second, p2.second));
+                    } else {
+                        delete p.second;
+                        
+                        throw ParseError();
+                    }
+                } else {
+                    return p;
+                }
             } else {
                 delete p.second;
                 
@@ -501,11 +517,8 @@ Bool(Predicate*) predicate(std::istream& in) {
         } else {
             throw ParseError();
         }
-    } else if ((p = compexp(in)).first) {
+    } else if ((p = comp_exp(in)).first) {
         space(in);
-
-        Bool(BooleanOperation) op;
-        Bool(Predicate*) p2;
 
         if ((op = boolean(in)).first) {
             space(in);
@@ -852,7 +865,21 @@ Bool(Expression*) expression(std::istream& in) {
             space(in);
 
             if (in.get() == ')') {
-                return e1;
+                space(in);
+
+                if ((binop = binary(in)).first) {
+                    space(in);
+
+                    if ((e2 = expression(in)).first) {
+                        return Pair(true, new BinaryExpression(e1.second, binop.second, e2.second));
+                    } else {
+                        delete e1.second;
+
+                        throw ParseError();
+                    }
+                } else {
+                    return e1;
+                }
             } else {
                 delete e1.second;
                 
