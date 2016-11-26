@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <unistd.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -16,12 +17,14 @@ int main (void) {
     Statement *stmt;
     std::clock_t start;
 
-    //std::cout << "/**********************************************************" << std::endl
-    //          << "* This program is in beta stages. Invalid expressions may *" << std::endl
-    //          << "* result in irrecoverable errors. Please use the grammar  *" << std::endl
-    //          << "* carefully. It is formally described in EBNF form in the *" << std::endl
-    //          << "* file \"syntax.ebnf\". Thank you!                          *" << std::endl
-    //          << "**********************************************************/" << std::endl;
+    std::cout << "/***********************************************************" << std::endl
+              << "*                         simple_ra                        *" << std::endl              
+              << "*                                                          *" << std::endl
+              << "*  The (not so simple) Relational Algebra Interpreter. See *" << std::endl
+              << "*  README.md for information related to the usage of the   *" << std::endl
+              << "*  software. The syntax is described in 'syntax.ebnf'.     *" << std::endl
+              << "*  Enter the command ':quit' to quit and ':help' for help. *" << std::endl
+              << "***********************************************************/" << std::endl;
 
     while (true) {
         std::string line = rl_gets();
@@ -51,6 +54,7 @@ int main (void) {
             try {
                 stmt = parse_statement(line);
                 stmt->exec();
+                delete stmt;
             }
             catch (std::exception &e) {
                 std::cout << "Error! " << e.what() << std::endl;
@@ -65,7 +69,7 @@ int main (void) {
 
 // libreadline - readline function with error
 // handling and history management
-std::string RelationalAlgebra::rl_gets() {
+std::string RelationalAlgebra::rl_gets(void) {
     char *line_read = readline(PROMPT);
     std::string l;
 
@@ -73,8 +77,9 @@ std::string RelationalAlgebra::rl_gets() {
         add_history(line_read);
         l = line_read;
     }
-    else
-        l = std::string(":") + QUIT;
+    else {
+        l = rl_gets();
+    }
 
     return l;
 }
@@ -105,3 +110,4 @@ void RelationalAlgebra::print_help(void) {
 
     syntax.close();
 }
+

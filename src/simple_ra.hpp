@@ -21,9 +21,10 @@
 
 namespace RelationalAlgebra {
     extern Database database;
-
-    std::string rl_gets ();
+    
     void print_help (void);
+
+    std::string rl_gets(void);
 };
 
 #endif

@@ -27,11 +27,13 @@ namespace RelationalAlgebra {
         Data(int i) : i(i) {}
         Data(float f) : f(f) {}
         Data(const std::string& str) {
-            for (size_t i = 0; i < 99 && i < str.length() ; i++) {
-                s[i] = str[i];
+            size_t j = 0;
+
+            for (j = 0; j < 99 && j < str.length() ; j++) {
+                s[j] = str[j];
             }
 
-            s[i] = '\0';
+            s[j] = '\0';
         } 
     };
 

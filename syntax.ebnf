@@ -1,23 +1,23 @@
 Formal Syntax for simple_ra
 
-small = "a" .. "z";
-caps = "A" .. "Z";
-letter = small | caps;
-identifier = ( small | "_" ) { letter | digit | "_"  } ;
-digit = "0" .. "9";
-integer = [ "+" | "-" ] digit {digit};
-number = [ "+" | "-" ] ( integer "." integer | integer );
-string = "\"" char { char } "\"";
-value = string | number;
-comp = "=" | "/=" | "<=" | ">=" | "<" | ">";
-boolean = "&&" | "||";
-binary = "X" | "U" | "^" | "-" | "@";
-compexp = ( identifier | value ) comp ( identifier | value );
+small = "a" .. "z"
+caps = "A" .. "Z"
+letter = small | caps
+identifier = ( small | "_" ) { letter | digit | "_"  }
+digit = "0" .. "9"
+integer = [ "+" | "-" ] digit {digit}
+number = [ "+" | "-" ] ( integer "." integer | integer )
+string = "\"" char { char } "\""
+value = string | number
+comp = "=" | "/=" | "<=" | ">=" | "<" | ">"
+boolean = "&&" | "||"
+binary = "X" | "U" | "^" | "-" | "@"
+compexp = ( identifier | value ) comp ( identifier | value )
 predicate = compexp
           | predicate boolean predicate
           | "!" predicate
-          | "(" predicate ")"; 
-tuple = "{" identifier ":" value { "," identifier ":" value } "}";
+          | "(" predicate ")" 
+tuple = "{" identifier ":" value { "," identifier ":" value } "}"
 aggregate = "MAX" | "MIN" | "SUM" | "AVG" | "COUNT"
 expression = tuple
            | identifier
@@ -25,10 +25,10 @@ expression = tuple
            | "AGGREGATE" "[" aggregate ":" identifier "]" "(" expression ")"
            | ("RENAME" | "PROJECT") "[" identifier { "," identifier } "]" "(" expression ")"
            | "(" expression ")"
-           | expression binary expression;
-operation = "~" | "<-";
+           | expression binary expression
+operation = "~" | "<-"
 statement = expression
-          | "[" identifier "]" operation expression;
-command = "quit" | "help";
-utility = "show" | "drop";
-command = ":" ( quit | help | show identifier | drop identifier );
+          | "[" identifier "]" operation expression ";"
+command = "quit" | "help" | "showall"
+utility = "drop"
+command = ":" ( command | utility identifier ) ";"

@@ -484,7 +484,7 @@ void Table::print(void) const {
     i = 0;
     std::cout << "|";
     for (auto& a : schema) {
-        std::cout << std::setw(column_lengths[i]) << a.first << "|";
+        std::cout << std::setw((int) column_lengths[i]) << a.first << "|";
         ++i;
     } std::cout << std::endl;
 
@@ -498,7 +498,7 @@ void Table::print(void) const {
 
         std::cout << "|";
         for (auto& b : a) {
-            std::cout << std::setw(column_lengths[i]) << b.show() << "|";
+            std::cout << std::setw((int) column_lengths[i]) << b.show() << "|";
             ++i;
         } std::cout << std::endl;
     }

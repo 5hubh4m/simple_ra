@@ -24,6 +24,7 @@ const char* ParseError::what() const throw() {
 
 void space(std::istream&);
 
+bool end(std::istream&);
 bool aggregate(std::istream&);
 bool select(std::istream&);
 bool project(std::istream&);
@@ -62,13 +63,29 @@ Bool(Statement*) statement(std::istream&);
 Statement* RelationalAlgebra::parse_statement(const std::string& input) {
     std::stringstream in(input, std::ios_base::in);
 
-    return statement(in).second;
+    Bool(Statement*) s = statement(in);
+    
+    if (!s.first) {
+        delete s.second;
+        
+        throw ParseError();
+    } else {
+        return s.second;
+    }
 }
 
 Expression* RelationalAlgebra::parse_expression(const std::string& input) {
     std::stringstream in(input, std::ios_base::in);
 
-    return expression(in).second;
+    Bool(Expression*) s = expression(in);
+    
+    if (!s.first) {
+        delete s.second;
+        
+        throw ParseError();
+    } else {
+        return s.second;
+    }
 }
 
 // End of parsing function interface
@@ -85,6 +102,16 @@ Expression* RelationalAlgebra::parse_expression(const std::string& input) {
 void space(std::istream& in) {
     while (isspace(in.peek())) {
         in.get();
+    }
+}
+
+bool end(std::istream& in) {
+    space(in);
+    
+    if (in.eof()) {
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -129,6 +156,10 @@ Bool(char) character(std::istream& in) {
             in.get();
 
             return Pair(true, '\"');
+        } else if (in.peek() == ';') {
+            in.get();
+            
+            return Pair(true, ';');
         } else {
             throw ParseError();
         }
@@ -463,6 +494,8 @@ Bool(Predicate*) predicate(std::istream& in) {
             if (in.get() == ')') {
                 return p;
             } else {
+                delete p.second;
+                
                 throw ParseError();
             }
         } else {
@@ -480,6 +513,8 @@ Bool(Predicate*) predicate(std::istream& in) {
             if ((p2 = predicate(in)).first) {
                 return Pair(true, new BinaryPredicate(p.second, op.second, p2.second));
             } else {
+                delete p.second;
+                
                 throw ParseError();
             }
         } else {
@@ -618,7 +653,7 @@ Bool(Expression*) unary_expression(std::istream& in) {
     Bool(Tuple) t;
     Bool(std::string) s;
     Bool(Predicate*) p;
-    Bool(Expression*) e1, e2;
+    Bool(Expression*) e1;
     Bool(AggregateOperation) agop;
     Bool(BinaryOperation) binop;
     std::vector<std::string> cols;
@@ -660,15 +695,24 @@ Bool(Expression*) unary_expression(std::istream& in) {
                             if (in.get() == ')') {
                                 return Pair(true, new SelectExpression(p.second, e1.second));
                             } else {
+                                delete e1.second;
+                                delete p.second;
+                                
                                 throw ParseError();
                             }
                         } else {
+                            delete p.second;
+
                             throw ParseError();
                         }
                     } else {
+                        delete p.second;
+
                         throw ParseError();
                     }
                 } else {
+                    delete p.second;
+
                     throw ParseError();
                 }
             } else {
@@ -704,15 +748,20 @@ Bool(Expression*) unary_expression(std::istream& in) {
                             space(in);
 
                             if (in.get() == ')') {
-                                if (proj)
+                                if (proj) {
                                     e = new ProjectExpression(cols, e1.second);
-                                    if (ren)
-                                        e = new RenameExpression(cols, e1.second);
-
-                                        return Pair(true, e);
-                                        } else {
-                                            throw ParseError();
-                                        }
+                                }
+                                
+                                if (ren) {
+                                    e = new RenameExpression(cols, e1.second);
+                                }
+                                
+                                return Pair(true, e);
+                            } else {
+                                delete e1.second;
+                                
+                                throw ParseError();
+                            }
                         } else {
                             throw ParseError();
                         }
@@ -755,6 +804,8 @@ Bool(Expression*) unary_expression(std::istream& in) {
                                     if (in.get() == ')') {
                                         return Pair(true, new AggregateExpression(agop.second, s.second, e1.second));
                                     } else {
+                                        delete e1.second;
+                                        
                                         throw ParseError();
                                     }
                                 } else {
@@ -803,6 +854,8 @@ Bool(Expression*) expression(std::istream& in) {
             if (in.get() == ')') {
                 return e1;
             } else {
+                delete e1.second;
+                
                 throw ParseError();
             }
         } else {
@@ -817,6 +870,8 @@ Bool(Expression*) expression(std::istream& in) {
             if ((e2 = expression(in)).first) {
                 return Pair(true, new BinaryExpression(e1.second, binop.second, e2.second));
             } else {
+                delete e1.second;
+                
                 throw ParseError();
             }
         } else {
@@ -876,11 +931,16 @@ Bool(Statement*) statement(std::istream& in) {
                     in.seekg(idx);
 
                     if ((e = expression(in)).first) {
-                        switch(op.second) {
+                        if (end(in)) {
+                            switch(op.second) {
                             case StatementOperation::StoreTable:
                                 return Pair(true, new StoreStatement(i.second, e.second));
                             case StatementOperation::CreateView:
                                 return Pair(true, new AssignStatement(i.second, exp));
+                            }
+                        } else {
+                            delete e.second;
+                            throw ParseError();
                         }
                     } else {
                         throw ParseError();
@@ -895,7 +955,13 @@ Bool(Statement*) statement(std::istream& in) {
             throw ParseError();
         }
     } else if ((e = expression(in)).first) {
+        if (end(in)) {
             return Pair(true, new ExpressionStatement(e.second));
+        } else {
+            delete e.second;
+            
+            throw ParseError();
+        }
     } else {
         return Pair(false, nullptr);
     }

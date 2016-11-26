@@ -17,10 +17,10 @@ std::string Cell::show() const {
     case DataType::Integer:
         return std::to_string(value.i);
 
-    case DataType::String:
+    case DataType::Float:
         return std::to_string(value.f);
     
-    case DataType::Float:
+    case DataType::String:
         return std::string(value.s);
     
     case DataType::Null:

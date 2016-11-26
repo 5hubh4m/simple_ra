@@ -131,32 +131,36 @@ Table BinaryExpression::eval(void) const {
             rename.push_back (a.first);
         }
 
-        for (auto& b : t2.getSchema ()) {
-            bool same = false;
+        if (common_attr.empty()) {
+            return t1 * t2;
+        } else {
+            for (auto& b : t2.getSchema ()) {
+                bool same = false;
 
-            for (auto& a : t1.getSchema ()) {
-                if (a.first == b.first) {
-                    s2.push_back (a.first + "2");
-                    same = true;
+                for (auto& a : t1.getSchema ()) {
+                    if (a.first == b.first) {
+                        s2.push_back (a.first + "2");
+                        same = true;
+                    }
+                }
+
+                if (!same) {
+                    s2.push_back (b.first);
+                    proj.push_back (b.first);
+                    rename.push_back (b.first);
                 }
             }
 
-            if (!same) {
-                s2.push_back (b.first);
-                proj.push_back (b.first);
-                rename.push_back (b.first);
+            Predicate* p = new BasicPredicate(common_attr[0] + "1", ComparisionOperation::Equal, common_attr[0] + "2");
+
+            for (size_t i = 1; i < common_attr.size(); i++) {
+                BasicPredicate e(common_attr[i] + "1", ComparisionOperation::Equal, common_attr[i] + "2");
+
+                p = new BinaryPredicate(&e, BooleanOperation::And, p);
             }
+
+            return (((t1.rename(s1) * t2.rename(s2)).select(p)).project(proj)).rename(rename);
         }
-
-        Predicate* p = new BasicPredicate(common_attr[0] + "1", ComparisionOperation::Equal, common_attr[0] + "2");
-
-        for (size_t i = 1; i < common_attr.size(); i++) {
-            BasicPredicate e(common_attr[i] + "1", ComparisionOperation::Equal, common_attr[i] + "2");
-
-            p = new BinaryPredicate(&e, BooleanOperation::And, p);
-        }
-
-        return (((t1.rename(s1) * t2.rename(s2)).select(p)).project(proj)).rename(rename);
     }
 }
 
