@@ -127,16 +127,16 @@ Bool(int) digit(std::istream& in) {
 
 Bool(int) number(std::istream& in) {
     Bool(int) a;
-    int num = 0, i = 0;
+    std::string num;
 
     if ((a = digit(in)).first) {
-        num += a.second * pow(10, i++);
+        num += (a.second + '0');
 
         while ((a = digit(in)).first) {
-            num += a.second * pow(10, i++);
+            num += (a.second + '0');
         }
 
-        return Pair(true, num);
+        return Pair(true, std::stoi(num));
     } else {
         return Pair(false, 0);
     }
@@ -228,12 +228,12 @@ Bool(Cell) cell(std::istream& in) {
                 if ((i = number(in)).first) {
                     a += std::to_string(i.second);
 
-                    return Pair(true, Cell(std::stof(a)));
+                    return Pair(true, Cell(neg ? -std::stof(a) : std::stof(a)));
                 } else {
                     throw ParseError();
                 }
             } else {
-                return Pair(true, Cell(i.second));
+                return Pair(true, Cell(neg ? -i.second : i.second));
             }
         } else {
             if (issigned) {
