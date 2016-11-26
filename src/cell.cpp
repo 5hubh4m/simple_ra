@@ -21,7 +21,7 @@ std::string Cell::show() const {
         return std::to_string(value.f);
     
     case DataType::Float:
-        return value.s;
+        return std::string(value.s);
     
     case DataType::Null:
         return std::string("Null");
@@ -38,7 +38,7 @@ bool Cell::operator == (const Cell& d) const {
             return value.f == d.getVal().f;
         
         case DataType::String:
-            return value.s == d.getVal().s;
+            return std::string(value.s) == std::string(d.getVal().s);
         
         case DataType::Null:
             return false;
@@ -62,7 +62,7 @@ bool Cell::operator <= (const Cell& d) const {
             return value.f == d.getVal().f || value.f < d.getVal().f;
         
         case DataType::String:
-            return value.s == d.getVal().s || value.s < d.getVal().s;
+            return std::string(value.s) == std::string(d.getVal().s) || std::string(value.s) < std::string(d.getVal().s);
         
         case DataType::Null:
             return false;
@@ -86,7 +86,7 @@ bool Cell::operator > (const Cell& d) const {
             return value.f > d.getVal().f;
         
         case DataType::String:
-            return value.s > d.getVal().s;
+            return std::string(value.s) > std::string(d.getVal().s);
         
         case DataType::Null:
             return false;
@@ -110,7 +110,7 @@ bool Cell::operator < (const Cell& d) const {
             return value.f < d.getVal().f;
         
         case DataType::String:
-            return value.s < d.getVal().s;
+            return std::string(value.s) < std::string(d.getVal().s);
         
         case DataType::Null:
             return false;
@@ -134,7 +134,7 @@ bool Cell::operator != (const Cell& d) const {
             return value.f != d.getVal().f;
         
         case DataType::String:
-            return value.s != d.getVal().s;
+            return std::string(value.s) != std::string(d.getVal().s);
         
         case DataType::Null:
             return true;
@@ -158,7 +158,7 @@ bool Cell::operator >= (const Cell& d) const {
             return value.f == d.getVal().f || value.f > d.getVal().f;
         
         case DataType::String:
-            return value.s == d.getVal().s || value.s > d.getVal().s;
+            return std::string(value.s) == std::string(d.getVal().s) || std::string(value.s) > std::string(d.getVal().s);
         
         case DataType::Null:
             return false;
