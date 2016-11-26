@@ -2,15 +2,17 @@
 A simple implementation of Relational Algebra.
 
 ### Compiling and running
+
 Go to the directory, and just use `make` to compile and `./simple_ra` or `make run` to run. The package `libreadline` (`libreadline-devel` or `libreadline-dev`) is required to compile and run the program. You can install it using the package manager of your operating system.
 
 ### Syntax
+
 The syntax is totally inspired from pure RA. However, to make it easier to type using an ASCII
 keyboard, some changes have been made. Below is a brief description of the syntax.
 
 * `table_name` : Displays whole view/table from a view/table named `table_name`
 
-* `SELECT [Predicate] (Expression)` : Select using a predicate from expression. Predicate is a list of elementary boolean expressions. The following predcate expressiona are valid
+* `SELECT [predicate] (expression)` : Select using a predicate from expression. Predicate is a list of elementary boolean expressions. The following predicate expressions are valid
 
 >`value > value`
 
@@ -22,67 +24,74 @@ keyboard, some changes have been made. Below is a brief description of the synta
 
 >`value = value`
 
->`value /= value`
+>`value =/= value`
 
-Here, a `value` is either a column name or a value. Operating on 2 values of different `type` will result in an error.
+>`value > 4 && value < 3`
 
-* `PROJECT [List of columns / Aggregate functions] (Expression)` : Project said columns from the expression, including the following aggregate functions
+>`!(value > 4 && value < 3) || greeting =/= "Hello" `
 
->`MAX : column name`
+Here, a `value` is either a column name or a value. Operating on two values of different `type` will result in an error.
 
->`MIN : column name`
+* `PROJECT [comma_seperated_column_names] (expression)` : Project said columns from the expression.
 
->`SUM : column name`, here column name should be of numeric type
+>`PROJECT [s_id, name] (student)`
 
->`AVG : column name`, here column name should be of numeric type
+* `RENAME [comma_seperated_column_names] (expression)` : Rename said columns from the expression.
 
->`COUNT : column name : value`
+* `AGGREGATE [function : column] (expression)` : Run the aggregate function `function` on the column `column`. The following functions are built-in
 
-* `ASSIGN [View name] (Expression)` : Create a view with the given name
+>`MAX : column_name`
 
-* `STORE [Table name] (Expression)` : Store the relation with the given name in the database
+>`MIN : column_name`
 
-* `(Expression) X (Expression)` : Cartesian product
+>`SUM : column_name`, here column name should be of numeric type
 
-* `(Expression) U (Expression)` : Union
+>`AVG : column_name`, here column name should be of numeric type
 
-* `(Expression) ^ (Expression)` : Intersection
+>`COUNT : column_name`, displays the count of each value in the relation.
 
-* `(Expression) @ (Expression)` : Natural join
+* `expression * expression` : Cartesian product
 
-* `(Expression) - (Expression)` : Set difference
+* `expression + expression` : Union
+
+* `expression ^ expression` : Intersection
+
+* `expression @ expression` : Natural join
+
+* `expression - expression` : Set difference
+
+* `[view_name] ~ expression` : Create a view with the identifier `view_name`.
+
+* `[table_name] <- expression` : Store the relation with name `table_name` in the database.
 
 ###Example
 
 Some example queries have been given below.
 
-`ASSIGN[student](RENAME[s_id, f_name, l_name, dept_id]({1, "Shubham", "Chaudhary", 1}))`
+`[student] <- RENAME [s_id, f_name, l_name, dept_id] ({1, "Shubham", "Chaudhary", 1})`
 
-`ASSIGN[student]((student) U ({2, "Shivam", "Garg", 1}))`
+`[student] <- student ^ {2, "Shivam", "Garg", 1}`
 
-`ASSIGN[department](RENAME[dept_id, dept_name]({1, "Computer"}))`
+`SELECT [s_id > 3 && f_name =/= "Shubham"] (student)`
 
-`SELECT[s_id > 3, f_name /= "Shubham"](student)`
+`student @ department`
 
-`(student) @ (department)`
+`[marks] <- RENAME [s_id, eng, phy] ({1, 98.0, 95.0})`
 
-`STORE[marks](RENAME[s_id, eng, phy]({1, 98.0, 95.0}))`
+`[marks] <- marks + {3, 98.1, 92.0}`
 
-`STORE[marks]((marks) U ({2, 89.0, 99.0}))`
+`PROJECT [AVG : eng] (marks)`
 
-`STORE[marks]((marks) U ({3, 98.1, 92.0}))`
+`[min_eng] ~ PROJECT [s_id] (marks @ RENAME [eng] (marks))`
 
-`PROJECT[MIN : eng](marks)`
+__Explanation__: It then assigns the `min_eng` with the view containing the `s_id`s of the `student`s with minimum marks in `eng`.
 
-`ASSIGN[min_eng](PROJECT[s_id]((marks) @ (RENAME[s_id, eng]((PROJECT[s_id](marks)) X (PROJECT[MIN : eng](marks))))))`
-
-__Explanation__: It selects the `s_id` of the student with minimum marks in `english`. It then takes it's cartesian product with a column of `s_id`s and natural joins it with marks table to obtain the `s_id` of student with minimum marks in english. It then assigns the `min_eng` with the view.
-
-`((student) @ (min_eng)) @ (department)` will give all the details of the student with minimum marks in english. The result of the query will change in accordance with the original data.
+`(student @ min_eng) @ department` will give all the details of the student with minimum marks in english. The result of the query will change in accordance with the original data.
 
 Other queries have been given in file `queries.sra`. Formal syntax is defined in EBNF form in `syntax.ebnf`.
 
 ### Helper Commands
+
 The following utility commands are available
 
 > `:quit` : Quit the program
@@ -93,13 +102,6 @@ The following utility commands are available
 
 > `:showall` : Show the basic information of the whole database, i.e the schema and no. of tuples of all tables and description of all views.
 
-### Precautions
-There have been efforts to increase the code's coverage using runtime exception handling, as a result of which the software is pretty robust. However, there might be some corner cases where the code breaks. Sorry for the inconvenience. To help debugging easier, you can enable informative outputs embedded throughout the codes by using `make debug` while compiling.
-
-Still, here is a list of identified causes of errors:
-* Using `ASSIGN` or `STORE` inside itself, and referring to itself. Like `ASSIGN[hello](PROJECT[id](ASSIGN[hello](hi)))` may cause errors. But they will be caught and reported.
-
 ### Caveats
+
 * The maximum length of any `string`(`identifier` or `value`) is `100 bytes`.
-* Because of the bad parser function, `string`s cannot have spaces. `Hello, world.` will become `Hello, world.`. Also, there are no escape characters.
-* `null` value is parsed but other functionality like evaluation or aggregate query handling is not implemented.
