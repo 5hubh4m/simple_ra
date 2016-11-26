@@ -5,8 +5,8 @@
 #include <iostream>
 #include <string>
 
-#include "table.hpp"
 #include "storage.hpp"
+#include "parser.hpp"
 
 #define DATA   ".data"
 #define SCHEMA "schema"
@@ -19,32 +19,11 @@
 #define DROP "drop"
 #define SHOWALL "showall"
 
-#define SELECT    "SELECT"
-#define PROJECT   "PROJECT"
-#define RENAME    "RENAME"
-#define INTERSEC  "^"
-#define UNION     "U"
-#define SETDIFF   "-"
-#define NATJOIN   "@"
-#define CARTESIAN "X"
-#define ASSIGN    "ASSIGN"
-#define STORE     "STORE"
+namespace RelationalAlgebra {
+    extern Database database;
 
-#define EQ "="
-#define LT "<"
-#define GT ">"
-#define LEQ "<="
-#define GEQ ">="
-#define NEQ "/="
+    std::string rl_gets ();
+    void print_help (void);
+};
 
-#define MAX "MAX"
-#define MIN "MIN"
-#define SUM "SUM"
-#define AVG "AVG"
-#define COUNT "COUNT"
-
-extern Database database;
-
-std::string rl_gets ();
-void print_help (void);
 #endif

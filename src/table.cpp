@@ -11,26 +11,24 @@
 #include "expression.hpp"
 #include "simple_ra.hpp"
 
-Table::Table (const Schema& s) {
-    schema = s;
-}
+using namespace RelationalAlgebra;
 
-const Schema& Table::getSchema () const {
+const Schema& Table::getSchema() const {
     return schema;
 }
 
-size_t Table::size () const {
-    return table.size ();
+size_t Table::size() const {
+    return table.size();
 }
 
-bool Table::is_union_compatible (const Tuple& t) const {
-    bool valid = t.size () == schema.size ();
+bool Table::is_union_compatible(const Tuple& t) const {
+    bool valid = t.size() == schema.size();
 
-    auto it = t.begin ();
-    auto jt = schema.begin ();
+    auto it = t.begin();
+    auto jt = schema.begin();
 
-    for (; jt != schema.end () && it != t.end (); ++jt, ++it) {
-        valid = valid && (it -> getType () == jt -> second);
+    for (; jt != schema.end() && it != t.end(); ++jt, ++it) {
+        valid = valid &&(it -> getType() == jt -> second);
 
         if (!valid)
             return false;
@@ -39,15 +37,15 @@ bool Table::is_union_compatible (const Tuple& t) const {
     return true;
 }
 
-bool Table::is_union_compatible (const Table& t) const {
-    return is_union_compatible (t.getSchema ());
+bool Table::is_union_compatible(const Table& t) const {
+    return is_union_compatible(t.getSchema());
 }
 
-bool Table::is_union_compatible (const Schema& s) const {
-    bool valid = s.size () == schema.size ();
+bool Table::is_union_compatible(const Schema& s) const {
+    bool valid = s.size() == schema.size();
 
-    for (auto it = s.begin (), jt = schema.begin (); jt != schema.end () && it != s.end (); ++jt, ++it) {
-        valid = valid && (it -> second == jt -> second);
+    for (auto it = s.begin(), jt = schema.begin(); jt != schema.end() && it != s.end(); ++jt, ++it) {
+        valid = valid &&(it -> second == jt -> second);
 
         if (!valid)
             return false;
@@ -57,10 +55,10 @@ bool Table::is_union_compatible (const Schema& s) const {
 }
 
 Tuple Table::operator [] (size_t idx) const {
-    if (idx >= table.size ())
-        throw std::runtime_error ("Index is too large.");
+    if (idx >= table.size())
+        throw std::runtime_error("Index is too large.");
 
-    auto it = table.begin ();
+    auto it = table.begin();
 
     while (idx--)
         ++it;
@@ -69,52 +67,52 @@ Tuple Table::operator [] (size_t idx) const {
 }
 
 Table Table::operator + (const Table& t) {
-    if (t.size () == 0)
-        return (*this);
+    if (t.size() == 0)
+        return(*this);
 
-    if (!is_union_compatible (t))
-        throw std::runtime_error ("Incompatible Schema");
+    if (!is_union_compatible(t))
+        throw std::runtime_error("Incompatible Schema");
 
-    table.insert (t.begin (), t.end ());
+    table.insert(t.begin(), t.end());
 
-    return (*this);
+    return(*this);
 }
 
 void Table::operator += (const Tuple& t) {
-    if (!is_union_compatible (t))
-        throw std::runtime_error ("Incompatible Schema");
+    if (!is_union_compatible(t))
+        throw std::runtime_error("Incompatible Schema");
 
-    table.insert (t);
+    table.insert(t);
 }
 
 Table Table::operator - (const Table& t) {
-    if (t.size () == 0)
-        return (*this);
+    if (t.size() == 0)
+        return(*this);
 
     if (!is_union_compatible(t))
-        throw std::runtime_error ("Incompatible Schema");
+        throw std::runtime_error("Incompatible Schema");
 
     for (auto& row : t)
-        table.erase (row);
+        table.erase(row);
 
-    return (*this);
+    return(*this);
 }
 
 Table Table::operator * (const Table& t) {
-    if (t.size () == 0) {
-        table.clear ();
-        schema.clear ();
+    if (t.size() == 0) {
+        table.clear();
+        schema.clear();
     }
     else {
         for (auto& a : schema) {
-            for (auto& b : t.getSchema ()) {
+            for (auto& b : t.getSchema()) {
                 if (a.first == b.first)
-                    throw std::runtime_error ("Invalid operation on tables. Column name " + a.first + " is same!");
+                    throw std::runtime_error("Invalid operation on tables. Column name " + a.first + " is same!");
             }
         }
 
-        for (auto& s : t.getSchema ()) {
-            schema.push_back (s);
+        for (auto& s : t.getSchema()) {
+            schema.push_back(s);
         }
 
         Tuple temp;
@@ -123,31 +121,31 @@ Table Table::operator * (const Table& t) {
         for (auto& row : table) {
             for (auto& row2 : t) {
                 temp = row;
-                temp.insert (temp.end (), row2.begin (), row2.end ());
-                new_table.insert (temp);
+                temp.insert(temp.end(), row2.begin(), row2.end());
+                new_table.insert(temp);
             }
         }
 
         table = new_table;
     }
 
-    return (*this);
+    return(*this);
 }
 
-Table Table::select (const Predicate& p) {
+Table Table::select(Predicate* p) {
     TableArray new_table;
 
     for (auto& row : table) {
-        if (p.eval (schema, row))
-            new_table.insert (row);
+        if (p->eval(schema, row))
+            new_table.insert(row);
     }
 
     table = new_table;
 
-    return (*this);
+    return(*this);
 }
 
-Table Table::project (const std::vector< std::string >& col_names) {
+Table Table::project(const std::vector< std::string >& col_names) {
     std::vector< size_t > keep_indices;
 
 #ifdef DEBUG
@@ -163,10 +161,10 @@ Table Table::project (const std::vector< std::string >& col_names) {
 
 #endif
 
-    for (size_t i = 0; i < schema.size (); i++) {
+    for (size_t i = 0; i < schema.size(); i++) {
         for (auto& b : col_names) {
             if (b == schema[i].first) {
-                keep_indices.push_back (i);
+                keep_indices.push_back(i);
             }
         }
     }
@@ -174,7 +172,7 @@ Table Table::project (const std::vector< std::string >& col_names) {
     for (size_t i = 0; i < keep_indices.size(); i++) {
         for (size_t j = i + 1; j < keep_indices.size(); j++) {
             if (keep_indices[i] == keep_indices[j]) {
-                throw std::runtime_error ("Invalid operation. Can't project same column twice!");
+                throw std::runtime_error("Invalid operation. Can't project same column twice!");
             }
         }
     }
@@ -186,15 +184,15 @@ Table Table::project (const std::vector< std::string >& col_names) {
     std::cout << std::endl;
 #endif
 
-    if (keep_indices.empty ()) {
-        schema.clear ();
-        table.clear ();
+    if (keep_indices.empty()) {
+        schema.clear();
+        table.clear();
     }
     else {
-        size_t key = 0, len = schema.size ();
+        size_t key = 0, len = schema.size();
         for (size_t i = 0; i < len; i++) {
-            if (std::find (keep_indices.begin(), keep_indices.end(), i) == keep_indices.end ()) {
-                schema.erase (schema.begin () + i - key++);
+            if (std::find(keep_indices.begin(), keep_indices.end(), i) == keep_indices.end()) {
+                schema.erase(schema.begin() + i - key++);
             }
         }
 
@@ -208,30 +206,30 @@ Table Table::project (const std::vector< std::string >& col_names) {
 
             key = 0;
             for (size_t i = 0; i < len; i++) {
-                if (std::find (keep_indices.begin(), keep_indices.end(), i) == keep_indices.end ()) {
-                    temp.erase (temp.begin () + i - key++);
+                if (std::find(keep_indices.begin(), keep_indices.end(), i) == keep_indices.end()) {
+                    temp.erase(temp.begin() + i - key++);
                 }
             }
 
-            new_table.insert (temp);
+            new_table.insert(temp);
         }
 
         table = new_table;
     }
 
-    return (*this);
+    return(*this);
 }
 
-Table Table::rename (const std::vector< std::string >& new_names) {
-    for (size_t i = 0 ; i < new_names.size () && i < schema.size (); i++)
+Table Table::rename(const std::vector< std::string >& new_names) {
+    for (size_t i = 0 ; i < new_names.size() && i < schema.size(); i++)
         schema[i].first = new_names[i];
 
-    return (*this);
+    return(*this);
 }
 
-Table Table::min (const std::string& col) const {
-    if (table.empty ())
-        throw std::runtime_error ("Empty table.");
+Table Table::min(const std::string& col) const {
+    if (table.empty())
+        throw std::runtime_error("Empty table.");
 
     size_t idx = 0;
     for (auto& cols : schema) {
@@ -242,7 +240,7 @@ Table Table::min (const std::string& col) const {
         idx++;
     }
 
-    Cell min_elem (table.begin () -> operator [] (idx));
+    Cell min_elem(table.begin() -> operator [](idx));
 
     for (auto& rows : table) {
         if (rows[idx] < min_elem)
@@ -251,18 +249,18 @@ Table Table::min (const std::string& col) const {
 
     Schema s;
     Tuple t;
-    t.push_back (min_elem);
-    s.push_back (std::make_pair ("MIN (" + col + ")", min_elem.getType ()));
+    t.push_back(min_elem);
+    s.push_back(std::make_pair("MIN(" + col + ")", min_elem.getType()));
 
-    Table result (s);
+    Table result(s);
     result += t;
 
     return result;
 }
 
-Table Table::max (const std::string& col) const {
-    if (table.empty ())
-        throw std::runtime_error ("Empty table.");
+Table Table::max(const std::string& col) const {
+    if (table.empty())
+        throw std::runtime_error("Empty table.");
 
     size_t idx = 0;
     for (auto& cols : schema) {
@@ -273,7 +271,7 @@ Table Table::max (const std::string& col) const {
         idx++;
     }
 
-    Cell max_elem (table.begin () -> operator [] (idx));
+    Cell max_elem(table.begin() -> operator [](idx));
 
     for (auto& rows : table) {
         if (rows[idx] > max_elem)
@@ -282,18 +280,18 @@ Table Table::max (const std::string& col) const {
 
     Schema s;
     Tuple t;
-    t.push_back (max_elem);
-    s.push_back (std::make_pair ("MAX (" + col + ")", max_elem.getType ()));
+    t.push_back(max_elem);
+    s.push_back(std::make_pair("MAX(" + col + ")", max_elem.getType()));
 
-    Table result (s);
+    Table result(s);
     result += t;
 
     return result;
 }
 
-Table Table::sum (const std::string& col) const {
-    if (table.empty ())
-        throw std::runtime_error ("Empty table.");
+Table Table::sum(const std::string& col) const {
+    if (table.empty())
+        throw std::runtime_error("Empty table.");
 
     size_t idx = 0;
     for (auto& cols : schema) {
@@ -306,41 +304,41 @@ Table Table::sum (const std::string& col) const {
 
     Cell c;
 
-    if (schema[idx].second == STRING)
-        throw std::runtime_error ("Invalid operation on data type string.");
+    if (schema[idx].second == DataType::String)
+        throw std::runtime_error("Invalid operation on data type string.");
 
-    else if (schema[idx].second == INTEGER) {
-        c = Cell (0);
+    else if (schema[idx].second == DataType::Integer) {
+        c = Cell(0);
 
         for (auto& rows : table) {
-            c = c.getVal ().i + rows[idx].getVal ().i;
+            c = c.getVal().i + rows[idx].getVal().i;
         }
     }
-    else if (schema[idx].second == FLOAT) {
-        c = Cell (0.0f);
+    else if (schema[idx].second == DataType::Float) {
+        c = Cell(0.0f);
 
         for (auto& rows : table) {
-            c = c.getVal ().f + rows[idx].getVal ().f;
+            c = c.getVal().f + rows[idx].getVal().f;
         }
     }
     else
-        throw std::runtime_error ("Unexpected type of cell.");
+        throw std::runtime_error("Unexpected type of cell.");
 
     Schema s;
     Tuple t;
-    t.push_back (c);
-    s.push_back (std::make_pair ("SUM (" + col + ")", c.getType ()));
+    t.push_back(c);
+    s.push_back(std::make_pair("SUM(" + col + ")", c.getType()));
 
-    Table result (s);
+    Table result(s);
     result += t;
 
     return result;
 
 }
 
-Table Table::avg (const std::string& col) const {
-    if (table.empty ())
-        throw std::runtime_error ("Empty table.");
+Table Table::avg(const std::string& col) const {
+    if (table.empty())
+        throw std::runtime_error("Empty table.");
 
     size_t idx = 0;
     for (auto& cols : schema) {
@@ -353,64 +351,66 @@ Table Table::avg (const std::string& col) const {
 
     Cell c;
 
-    if (schema[idx].second == STRING)
-        throw std::runtime_error ("Invalid operation on data type string.");
+    if (schema[idx].second == DataType::String)
+        throw std::runtime_error("Invalid operation on data type string.");
 
-    else if (schema[idx].second == INTEGER) {
-        c = Cell (0);
+    else if (schema[idx].second == DataType::Integer) {
+        c = Cell(0);
 
         for (auto& rows : table) {
-            c = c.getVal ().i + rows[idx].getVal ().i;
+            c = c.getVal().i + rows[idx].getVal().i;
         }
 
-        c = Cell ((float)((float)c.getVal ().i / table.size ()));
+        c = Cell((float)((float)c.getVal().i / table.size()));
     }
-    else if (schema[idx].second == FLOAT) {
-        c = Cell (0.0f);
+    else if (schema[idx].second == DataType::Float) {
+        c = Cell(0.0f);
 
         for (auto& rows : table) {
-            c = c.getVal ().f + rows[idx].getVal ().f;
+            c = c.getVal().f + rows[idx].getVal().f;
         }
 
-        c = Cell ((float)(c.getVal ().f / table.size ()));
+        c = Cell((float)(c.getVal().f / table.size()));
     }
     else
-        throw std::runtime_error ("Unexpected type of cell.");
+        throw std::runtime_error("Unexpected type of cell.");
 
     Schema s;
     Tuple t;
-    t.push_back (c);
-    s.push_back (std::make_pair ("AVG (" + col + ")", c.getType ()));
+    t.push_back(c);
+    s.push_back(std::make_pair("AVG(" + col + ")", c.getType()));
 
-    Table result (s);
+    Table result(s);
     result += t;
 
     return result;
 
 }
 
-Table Table::aggregate (const Aggregate& a) const {
-    if (a.operation == MIN)
-        return min (a.col_name);
+Table Table::aggregate(const AggregateOperation& a, const std::string& col_name) const {
+    if (a == AggregateOperation::Min)
+        return min(col_name);
 
-    else if (a.operation == MAX)
-        return max (a.col_name);
+    else if (a == AggregateOperation::Min)
+        return max(col_name);
 
-    else if (a.operation == SUM)
-        return sum (a.col_name);
+    else if (a == AggregateOperation::Sum)
+        return sum(col_name);
 
-    else if (a.operation == AVG)
-        return avg (a.col_name);
+    else if (a == AggregateOperation::Avg)
+        return avg(col_name);
 
-    else if (a.operation == COUNT)
-        return count (a.col_name, a.value);
+    else if (a == AggregateOperation::Count)
+        return count(col_name);
 
     else
-        throw std::runtime_error ("Unexpected and unidentified aggregate operation type.");
+        throw std::runtime_error("Unexpected and unidentified aggregate operation type.");
 
 }
 
-Table Table::count (const std::string& col, const Cell& c) const {
+Table Table::count(const std::string& col) const {
+    std::map<Cell, size_t> count_map;
+
     size_t idx = 0;
     for (auto& cols : schema) {
         if (cols.first == col) {
@@ -419,27 +419,35 @@ Table Table::count (const std::string& col, const Cell& c) const {
 
         idx++;
     }
-
-    size_t count = 0;
 
     for (auto& rows : table) {
-        if (rows[idx] == c)
-            count++;
+        if (count_map.find(rows[idx]) == count_map.end()) {
+            count_map[rows[idx]] = 0;
+        } else {
+            count_map[rows[idx]] += 1;
+        }
     }
 
     Schema s;
-    Tuple t;
-    t.push_back (Cell ((int) count));
-    s.push_back (std::make_pair ("COUNT (" + col + ", " + c.show () + ")", INTEGER));
 
-    Table result (s);
-    result += t;
+    s.push_back(std::make_pair("VALUE", schema[idx].second));
+    s.push_back(std::make_pair("COUNT(" + col + ")", DataType::Integer));
+
+    Table result(s);
+
+    for (auto& a : count_map) {
+        Tuple t;
+        t.push_back(a.first);
+        t.push_back(Cell((int) a.second));
+
+        result += t;
+    }
 
     return result;
 }
 
-void Table::print (void) const {
-    if (table.empty ()) {
+void Table::print(void) const {
+    if (table.empty()) {
         std::cout << "Empty table." << std::endl;
         return;
     }
@@ -449,16 +457,16 @@ void Table::print (void) const {
 
     size_t i = 0;
     for (auto& col : schema) {
-        size_t len = col.first.length ();
+        size_t len = col.first.length();
 
         for (auto& row : table) {
-            temp = strlen (row[i].getVal ().s);
+            temp = row[i].show().length();
 
             if (temp > len)
                 len = temp;
         }
 
-        column_lengths.push_back (len);
+        column_lengths.push_back(len);
         ++i;
     }
 
@@ -466,7 +474,7 @@ void Table::print (void) const {
     for (auto& a : column_lengths)
         row_len += a;
 
-    row_len += column_lengths.size () + 1;
+    row_len += column_lengths.size() + 1;
 
 
     for (size_t i = 0; i < row_len; i++)
@@ -476,7 +484,7 @@ void Table::print (void) const {
     i = 0;
     std::cout << "|";
     for (auto& a : schema) {
-        std::cout << std::setw (column_lengths[i]) << a.first << "|";
+        std::cout << std::setw(column_lengths[i]) << a.first << "|";
         ++i;
     } std::cout << std::endl;
 
@@ -490,7 +498,7 @@ void Table::print (void) const {
 
         std::cout << "|";
         for (auto& b : a) {
-            std::cout << std::setw (column_lengths[i]) << b.show() << "|";
+            std::cout << std::setw(column_lengths[i]) << b.show() << "|";
             ++i;
         } std::cout << std::endl;
     }

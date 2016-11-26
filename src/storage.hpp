@@ -8,37 +8,38 @@
 #include "table.hpp"
 #include "expression.hpp"
 
-/* Database class
- *
- * The class that manages retrieval and deposition
- * of data onto the file system.
- */
-class Database {
-  private:
-    // List of commissioned tables by name
-    std::vector< std::string > table_list;
+namespace RelationalAlgebra {
+    /* Database class
+     *
+     * The class that manages retrieval and deposition
+     * of data onto the file system.
+     */
+    class Database {
+      private:
+        // List of commissioned tables by name
+        std::vector< std::string > table_list;
 
-    // List of commissioned views by name
-    std::map< std::string, std::string > views;
+        // List of commissioned views by name
+        std::map< std::string, std::string > views;
 
-  public:
-    // Construct the database
-    Database ();
+      public:
+        // Construct the database
+        Database ();
 
-    // Retrieve table by name
-    Table operator [] (const std::string&) const;
+        // Retrieve table by name
+        Table operator [] (const std::string&) const;
 
-    // Add table to database
-    void add_table (const std::string&, const Table&);
+        // Add table to database
+        void add_table (const std::string&, const Table&);
 
-    void add_view (const std::string&, const std::string&);
+        void add_view (const std::string&, const std::string&);
 
-    // Remove table from database
-    void remove (const std::string&);
+        // Remove table from database
+        void remove (const std::string&);
 
-    // Print DB information to console
-    void info (void) const;
+        // Print DB information to console
+        void info (void) const;
+    };
 };
-
 
 #endif

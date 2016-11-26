@@ -8,84 +8,222 @@
 #include "cell.hpp"
 #include "table.hpp"
 
-/* BoolExpr - Boolean Expression
- *
- * Defines the struct for an elementary boolean expression
- */
-struct BoolExpr {
-    std::string id1, operation, id2;
+namespace RelationalAlgebra {
+    enum class BinaryOperation {
+        Union, Intersection, SetDifference, Cartesian, NaturalJoin
+    };
 
-    // Eval function, given a schema and a tuple, evaluate the
-    // value of the boolean expression
-    bool eval (const Schema&, const Tuple&) const;
-};
+    enum class BooleanOperation {
+        And, Or
+    };
 
-/* Predicate struct
- *
- * Defines the behaviour of a collection of BoolExprs,
- * all of them must be true for the predicate to be true.
- */
-struct Predicate {
-    std::vector< BoolExpr > expressions;
+    enum class ComparisionOperation {
+        Equal, NotEqual, LessThan, GreaterThan, LessThanEqual, GreaterThanEqual
+    };
 
-    bool eval (const Schema&, const Tuple&) const;
-};
+    enum class AggregateOperation {
+        Max, Min, Avg, Sum, Count
+    };
 
-/* Aggregate struct
- *
- * Stores info for aggregate queries
- */
-struct Aggregate {
-    std::string operation, col_name;
-    Cell value;
-};
+    enum class StatementOperation {
+        StoreTable, CreateView
+    };
 
-/* Expression class
- *
- * Represents the node of the abstract syntax tree of the
- * language.
- */
-class Expression {
-  private:
-    // Define the type of node
-    enum {
-        TUPLE, SIMPLE, COMPOUND
-    } type;
+    class Predicate {
+    public:
+        virtual bool eval(const Schema&, const Tuple&) const = 0;
 
-    std::string operation;          // Operation
+        virtual ~Predicate() {}
+    };
 
-    // Define the operands
-    struct {
-        std::vector< Expression > expressions;
-        std::string table_name;
-    } operand;
+    class BasicPredicate : public Predicate {
+        ComparisionOperation operation;
+        std::string operand1, operand2;
+        Cell value1, value2;
 
-    // Option for the operation
-    struct {
-        Predicate bool_exp;
-        std::vector< std::string > col_names;
-        std::vector< Aggregate > aggregate;
-        std::string table_name, expression;
+    public:
+        BasicPredicate(const std::string& c1, const ComparisionOperation op, const std::string& c2) :
+            operation(op), operand1(c1), operand2(c2) {}
+
+        BasicPredicate(const Cell& c1, const ComparisionOperation op, const Cell& c2) :
+            operation(op), value1(c1), value2(c2) {}
+
+        BasicPredicate(const std::string& c1, const ComparisionOperation op, const Cell& c2) :
+            operation(op), operand1(c1), value2(c2) {}
+
+        BasicPredicate(const Cell& c1, const ComparisionOperation op, const std::string& c2) :
+            operation(op), operand2(c2), value1(c1) {}
+
+        bool eval(const Schema&, const Tuple&) const override;
+
+        ~BasicPredicate() override {}
+    };
+
+    class NotPredicate : public Predicate {
+        std::unique_ptr<Predicate> pred;
+
+    public:
+        NotPredicate(Predicate* p) :
+            pred(p) {}
+
+        bool eval(const Schema&, const Tuple&) const override;
+
+        ~NotPredicate() override {}
+    };
+
+    class BinaryPredicate : public Predicate {
+        BooleanOperation operation;
+        std::unique_ptr<Predicate> pred1, pred2;
+
+    public:
+        BinaryPredicate(Predicate* p1, const BooleanOperation& op, Predicate* p2) :
+            operation(op), pred1(p1), pred2(p2) {}
+
+        bool eval(const Schema&, const Tuple&) const override;
+
+        ~BinaryPredicate() override {}
+    };
+
+    class Expression {
+    public:
+        virtual Table eval(void) const = 0;
+
+        virtual ~Expression() {}
+    };
+
+    class TupleExpression : public Expression {
         Table tuple;
-    } option;
 
-  public:
-    // Constructors
-    Expression () {}
-    Expression (const std::string& tname);
-    Expression (const Table&);
-    Expression (const std::string&, const std::string&, Expression);
-    Expression (const std::string&, const std::string&, const std::string&);
-    Expression (const std::string&, Expression, Expression);
-    Expression (const std::string&, const std::vector< std::string >&, Expression);
-    Expression (const std::string&, const std::vector< Aggregate >&, Expression);
-    Expression (const std::string&, const Predicate&, Expression);
+    public:
+        TupleExpression(const Table& tup) :
+            tuple(tup) {}
 
-    // Print expression for debugging purposes
-    void printExpr (void) const;
+        Table eval(void) const override;
 
-    // Evaluate an expression
-    Table eval () const;
+        ~TupleExpression() override {}
+    };
+
+    class TableExpression : public Expression {
+        std::string table_name;
+
+    public:
+        TableExpression(const std::string& name) :
+            table_name(name) {}
+
+        Table eval(void) const override;
+
+        ~TableExpression() override {}
+    };
+
+    class BinaryExpression : public Expression {
+        BinaryOperation operation;
+        std::unique_ptr<Expression> expression1, expression2;
+
+    public:
+        BinaryExpression(Expression* e1, const BinaryOperation& op, Expression* e2):
+            operation(op), expression1(e1), expression2(e2) {}
+
+        Table eval(void) const override;
+
+        ~BinaryExpression() override {}
+    };
+
+    class SelectExpression : public Expression {
+        std::unique_ptr<Predicate> predicate;
+        std::unique_ptr<Expression> expression;
+
+    public:
+        SelectExpression(Predicate* p, Expression* e) :
+            predicate(p), expression(e) {};
+
+        Table eval(void) const override;
+
+        ~SelectExpression() override {}
+    };
+
+    class ProjectExpression : public Expression {
+        std::vector<std::string> columns;
+        std::unique_ptr<Expression> expression;
+
+    public:
+        ProjectExpression(const std::vector<std::string>& cols, Expression* e) :
+            columns(cols), expression(e) {};
+
+        Table eval(void) const override;
+
+        ~ProjectExpression() override {}
+    };
+
+    class AggregateExpression : public Expression {
+        AggregateOperation operation;
+        std::string column;
+        std::unique_ptr<Expression> expression;
+
+    public:
+        AggregateExpression(const AggregateOperation& op, const std::string& col, Expression* e) :
+            operation(op), column(col), expression(e) {};
+
+        Table eval(void) const override;
+
+         ~AggregateExpression() override {}
+    };
+
+    class RenameExpression : public Expression {
+        std::vector<std::string> new_names;
+        std::unique_ptr<Expression> expression;
+
+    public:
+        RenameExpression(const std::vector<std::string>& names, Expression* e) :
+            new_names(names), expression(e) {}
+
+        Table eval(void) const override;
+
+        ~RenameExpression() override {}
+    };
+
+    class Statement {
+    public:
+        virtual void exec(void) const = 0;
+
+        virtual ~Statement() {}
+    };
+
+    class ExpressionStatement : public Statement {
+        std::unique_ptr<Expression> expression;
+
+    public:
+        ExpressionStatement(Expression* exp) :
+            expression(exp) {}
+
+        void exec(void) const override;
+
+        ~ExpressionStatement() override {}
+    };
+
+    class AssignStatement : public Statement {
+        std::string expression, name;
+
+    public:
+        AssignStatement(const std::string& n, const std::string& exp) :
+            expression(exp), name(n) {}
+
+        void exec(void) const override;
+
+        ~AssignStatement() override {}
+    };
+
+    class StoreStatement : public Statement {
+        std::unique_ptr<Expression> expression;
+        std::string name;
+
+    public:
+        StoreStatement(const std::string& n, Expression* exp) :
+            expression(exp), name(n) {}
+
+        void exec(void) const override;
+
+        ~StoreStatement() override {}
+    };
 };
 
 #endif

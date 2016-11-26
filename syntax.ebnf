@@ -1,28 +1,34 @@
 Formal Syntax for simple_ra
 
-letter = "a".."z" | "A".."Z";
-identifier = ( letter | "_" ) { letter | digit | "_"  } ;
-digit = "0".."9";
-integer = digit {digit};
-real = integer "." integer;
-string = "\"" {letter} "\"";
-value = real | integer | string;
+small = "a" .. "z";
+caps = "A" .. "Z";
+letter = small | caps;
+identifier = ( small | "_" ) { letter | digit | "_"  } ;
+digit = "0" .. "9";
+integer = [ "+" | "-" ] digit {digit};
+number = [ "+" | "-" ] ( integer "." integer | integer );
+string = "\"" char { char } "\"";
+value = string | number;
 comp = "=" | "/=" | "<=" | ">=" | "<" | ">";
+boolean = "&&" | "||";
 binary = "X" | "U" | "^" | "-" | "@";
-predicate = ( identifier | value ) comp ( identifier | value ) {"," ( identifier | value ) comp ( identifier | value )}
-tuple = "{" identifier ":" value {"," identifier ":" value} "}";
-aggregate = "MAX" | "MIN" | "SUM" | "AVG"
-expression = tuple 
-    | identifier 
-    | "SELECT" "[" predicate "]" "(" expression ")"
-    | "ASSIGN" "[" identifier "]" "(" expression ")"
-    | "STORE" "[" identifier "]" "(" expression ")"
-    | "PROJECT" "[" identifier {"," identifier} "]" "(" expression ")"
-    | "PROJECT" "[" ( aggregate ":" identifier ) | ( "COUNT" ":" identifier ":" value ) {"," ( aggregate ":" identifier ) | ( "COUNT" ":" identifier ":" value )} "]" "(" expression ")"
-    | "RENAME" "[" identifier {"," identifier} "]" "(" expression ")"
-    | "(" expression ")" binary "(" expression ")";
-quit = "quit"
-help = "help"
-show all = "showall"
-drop = "drop"
-command = ":" (quit | help | showall | drop identifier)
+compexp = ( identifier | value ) comp ( identifier | value );
+predicate = compexp
+          | predicate boolean predicate
+          | "!" predicate
+          | "(" predicate ")"; 
+tuple = "{" identifier ":" value { "," identifier ":" value } "}";
+aggregate = "MAX" | "MIN" | "SUM" | "AVG" | "COUNT"
+expression = tuple
+           | identifier
+           | "SELECT" "[" predicate "]" "(" expression ")"
+           | "AGGREGATE" "[" aggregate ":" identifier "]" "(" expression ")"
+           | ("RENAME" | "PROJECT") "[" identifier { "," identifier } "]" "(" expression ")"
+           | "(" expression ")"
+           | expression binary expression;
+operation = "~" | "<-";
+statement = expression
+          | "[" identifier "]" operation expression;
+command = "quit" | "help";
+utility = "show" | "drop";
+command = ":" ( quit | help | show identifier | drop identifier );
