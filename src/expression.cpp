@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <ctime>
 #include <string>
 
 #include "cell.hpp"
@@ -165,15 +166,51 @@ Table BinaryExpression::eval(void) const {
 }
 
 void ExpressionStatement::exec(void) const {
+    std::clock_t start = std::clock();
+    
     expression->eval().print();
+
+    std::cout << "Query completed. Time taken: "
+              << double(std::clock() - start) / CLOCKS_PER_SEC
+              << " s." << std::endl;
 }
 
 void StoreStatement::exec(void) const {
+    std::clock_t start = std::clock();
+    
     database.add_table(name, expression->eval());
+
+    std::cout << "Query completed. Time taken: "
+              << double(std::clock() - start) / CLOCKS_PER_SEC
+              << " s." << std::endl;
 }
 
 void AssignStatement::exec(void) const {
+    std::clock_t start = std::clock();
+    
     database.add_view(name, expression);
+    
+    std::cout << "Query completed. Time taken: "
+              << double(std::clock() - start) / CLOCKS_PER_SEC
+              << " s." << std::endl;
 }
 
+void CommandStatement::exec(void) const {
+    switch(command) {
+    case Command::Help:
+        print_help();
+        break;
+    case Command::ShowAll:
+        showall();
+        break;
+    case Command::Quit:
+        exit(0);
+        break;
+    }
+}
 
+void DropStatement::exec(void) const {
+    database.remove(table_name.c_str());
+
+    std::cout << "Removed Table/View " << table_name << " from database (if existed)." << std::endl;
+}

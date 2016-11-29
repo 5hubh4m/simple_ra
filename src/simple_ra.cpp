@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
-#include <ctime>
-#include <unistd.h>
+#include <memory>
+#include <cctype>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -14,8 +14,7 @@ using namespace RelationalAlgebra;
 Database RelationalAlgebra::database;
 
 int main (void) {
-    Statement *stmt;
-    std::clock_t start;
+    std::unique_ptr<Statement> stmt;
 
     std::cout << "/***********************************************************" << std::endl
               << "*                         simple_ra                        *" << std::endl              
@@ -31,38 +30,14 @@ int main (void) {
         if (line.empty()) {
             continue;
         }
-        if (line[0] == ':') {
-            if (line.substr(1) == QUIT)
-                exit(0);
-            else if (line.substr(1) == HELP)
-                print_help();
-            else if (line.substr(1, std::string(DROP).length()) == DROP) {
-                std::string file = line.substr(std::string(DROP).length() + 2);
-                std::remove(file.c_str());
 
-                std::cout << "Deleted relation " << file << " if exists." << std::endl;
-                database.remove(file);
-            }
-            else if (line.substr(1, std::string(SHOWALL).length()) == SHOWALL) {
-                database.info();
-            }
-            else
-                std::cout << "Invalid command." << std::endl;
-        }
-        else {
-            start = std::clock();
-            try {
-                stmt = parse_statement(line);
-                stmt->exec();
-                delete stmt;
-            }
-            catch (std::exception &e) {
-                std::cout << "Error! " << e.what() << std::endl;
-            }
-
-            std::cout << "Query completed. Time taken: "
-                      << double(std::clock() - start) / CLOCKS_PER_SEC
-                      << " s." << std::endl;
+        try {
+            stmt = std::unique_ptr<Statement>(parse_statement(line));
+            stmt->exec();
+        } catch (ParseError& e) {
+            std::cout << "Parsing error occured! Please check your query." << std::endl;            
+        } catch (std::runtime_error &e) {
+            std::cout << "Runtime error! " << e.what() << std::endl;
         }
     }
 }
@@ -70,15 +45,42 @@ int main (void) {
 // libreadline - readline function with error
 // handling and history management
 std::string RelationalAlgebra::rl_gets(void) {
-    char *line_read = readline(PROMPT);
+    char *line_read = nullptr;
     std::string l;
+    size_t count = 0;
+    bool first = true;
 
-    if (line_read && *line_read) {
-        add_history(line_read);
-        l = line_read;
-    }
-    else {
-        l = rl_gets();
+    line_read = readline(PROMPT);
+
+    while (true) {
+        if (line_read) {
+            if(*line_read) {
+                add_history(line_read);
+            } else if (first) {
+                return std::string();
+            }
+            
+            first = false;
+            l += line_read;
+
+            for (size_t i = l.size(); i > 0; i--) {
+                if (isspace(l[i - 1])) {
+                    count++;
+                } else {
+                    break;
+                }
+            }
+
+            l = l.substr(0, l.size() - count);
+
+            if (l.back() == ';') {
+                return l;
+            }
+        } else {
+            exit(0);
+        }
+
+        line_read = readline(SEC_PROMPT);
     }
 
     return l;
@@ -111,3 +113,6 @@ void RelationalAlgebra::print_help(void) {
     syntax.close();
 }
 
+void RelationalAlgebra::showall(void) {
+    database.info();
+}

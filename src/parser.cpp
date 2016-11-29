@@ -31,30 +31,31 @@ bool project(std::istream&);
 bool rename(std::istream&);
 bool negate(std::istream&);
 
-Bool(int) digit(std::istream&);
-Bool(int) number(std::istream&);
-Bool(char) character(std::istream&);
-Bool(char) smallalpha_score(std::istream&);
-Bool(char) alpha_score_digit(std::istream&);
+Bool(int)         digit(std::istream&);
+Bool(int)         number(std::istream&);
+Bool(char)        character(std::istream&);
+Bool(char)        smallalpha_score(std::istream&);
+Bool(char)        alpha_score_digit(std::istream&);
 Bool(std::string) string(std::istream&);
 Bool(std::string) identifier(std::istream&);
 Bool(std::string) comma_identifier(std::istream&);
 
-Bool(Cell) cell(std::istream&);
-Bool(Cell) comma_cell(std::istream&);
+Bool(Cell)  cell(std::istream&);
+Bool(Cell)  comma_cell(std::istream&);
 Bool(Tuple) tuple(std::istream& in);
 
 Bool(ComparisionOperation) comparision(std::istream&);
-Bool(BinaryOperation) binary(std::istream&);
-Bool(BooleanOperation) boolean(std::istream&);
-Bool(AggregateOperation) aggregate_func(std::istream&);
-Bool(StatementOperation) operation(std::istream&);
+Bool(BinaryOperation)      binary(std::istream&);
+Bool(BooleanOperation)     boolean(std::istream&);
+Bool(AggregateOperation)   aggregate_func(std::istream&);
+Bool(StatementOperation)   operation(std::istream&);
+Bool(Command)              command(std::istream&);
 
 Bool(BasicPredicate*) comp_exp(std::istream&);
-Bool(Predicate*) predicate(std::istream&);
-Bool(Expression*) unary_expression(std::istream&);
-Bool(Expression*) expression(std::istream&);
-Bool(Statement*) statement(std::istream&);
+Bool(Predicate*)      predicate(std::istream&);
+Bool(Expression*)     unary_expression(std::istream&);
+Bool(Expression*)     expression(std::istream&);
+Bool(Statement*)      statement(std::istream&);
 
 // End of declarations
 
@@ -106,9 +107,9 @@ void space(std::istream& in) {
 }
 
 bool end(std::istream& in) {
-    space(in);
-    
-    if (in.eof()) {
+    if (in.peek() == ';') {
+        in.get();
+        
         return true;
     } else {
         return false;
@@ -927,12 +928,80 @@ Bool(StatementOperation) operation(std::istream& in) {
     }
 }
 
+Bool(Command) command(std::istream& in) {
+    std::string s;
+
+    if (in.peek() == 'q' || in.peek() == 'h') { 
+        for (size_t i = 0; i < 4; i++) {
+            s += in.get();
+        }
+
+        if (s == "quit") {
+            return Pair(true, Command::Quit);
+        } else if (s == "help") {
+            return Pair(true, Command::Help);
+        } else {
+            throw ParseError();
+        }
+    } else if (in.peek() == 's') {
+        for (size_t i = 0; i <7; i++) {
+            s += in.get();
+        }
+
+        if (s == "showall") {
+            return Pair(true, Command::ShowAll);
+        } else {
+            throw ParseError();
+        }
+
+    } else {
+        return Pair(false, Command::Quit);
+    }
+}
+
 Bool(Statement*) statement(std::istream& in) {
     Bool(Expression*) e;
     Bool(std::string) i;
     Bool(StatementOperation) op;
+    Bool(Command) c;
 
-    if (in.peek() == '[') {
+    if (in.peek() == ':') {
+        in.get();
+
+        space(in);
+
+        if ((c = command(in)).first) {
+            space(in);
+
+            return Pair(true, new CommandStatement(c.second));
+        } else if (in.peek() == 'd') {
+            std::string s;
+            
+            for (size_t i = 0; i < 4; i++) {
+                s += in.get();
+            }
+
+            if (s == "drop") {
+                space(in);
+
+                if ((i = identifier(in)).first) {
+                    space(in);
+
+                    if (end(in)) {
+                        return Pair(true, new DropStatement(i.second));
+                    } else {
+                        throw ParseError();
+                    }
+                } else {
+                    throw ParseError();
+                }
+            } else {
+                throw ParseError();
+            }
+        } else {
+            throw ParseError();
+        }
+    } else if (in.peek() == '[') {
         in.get();
 
         space(in);

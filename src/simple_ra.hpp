@@ -8,16 +8,12 @@
 #include "storage.hpp"
 #include "parser.hpp"
 
-#define DATA   ".data"
-#define SCHEMA "schema"
-#define VIEW  "views"
-#define SYNTAX "syntax.ebnf"
-#define PROMPT "R-ALGEBRA>>> "
-
-#define QUIT "quit"
-#define HELP "help"
-#define DROP "drop"
-#define SHOWALL "showall"
+#define DATA       ".data"
+#define SCHEMA     "schema"
+#define VIEW       "views"
+#define SYNTAX     "syntax.ebnf"
+#define PROMPT     "R-ALGEBRA>>> "
+#define SEC_PROMPT "           > "
 
 namespace RelationalAlgebra {
     extern Database database;
@@ -25,6 +21,8 @@ namespace RelationalAlgebra {
     void print_help (void);
 
     std::string rl_gets(void);
+
+    void showall(void);
 };
 
 #endif

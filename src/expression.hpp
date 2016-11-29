@@ -29,6 +29,10 @@ namespace RelationalAlgebra {
         StoreTable, CreateView
     };
 
+    enum class Command {
+        Help, Quit, ShowAll    
+    };
+
     class Predicate {
     public:
         virtual bool eval(const Schema&, const Tuple&) const = 0;
@@ -223,6 +227,30 @@ namespace RelationalAlgebra {
         void exec(void) const override;
 
         ~StoreStatement() override {}
+    };
+
+    class CommandStatement : public Statement {
+        Command command;
+
+    public:
+        CommandStatement(const Command& c) :
+            command(c) {}
+
+        void exec(void) const override;
+
+        ~CommandStatement() override {}
+    };
+
+    class DropStatement : public Statement {
+        std::string table_name;
+
+    public:
+        DropStatement(const std::string& s) :
+            table_name(s) {}
+
+        void exec(void) const override;
+
+        ~DropStatement() override {}
     };
 };
 
