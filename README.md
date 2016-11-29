@@ -10,9 +10,9 @@ Go to the directory, and just use `make` to compile and `./simple_ra` or `make r
 The syntax is totally inspired from pure RA. However, to make it easier to type using an ASCII
 keyboard, some changes have been made. Below is a brief description of the syntax.
 
-* `table_name` : Displays whole view/table from a view/table named `table_name`
+* `table_name;` : Displays whole view/table from a view/table named `table_name`
 
-* `SELECT [predicate] (expression)` : Select using a predicate from expression. Predicate is a list of elementary boolean expressions. The following predicate expressions are valid
+* `SELECT [predicate] (expression);` : Select using a predicate from expression. Predicate is a list of elementary boolean expressions. The following predicate expressions are valid
 
 >`value > value`
 
@@ -32,13 +32,13 @@ keyboard, some changes have been made. Below is a brief description of the synta
 
 Here, a `value` is either a column name or a value. Operating on two values of different `type` will result in an error.
 
-* `PROJECT [comma_seperated_column_names] (expression)` : Project said columns from the expression.
+* `PROJECT [comma_seperated_column_names] (expression);` : Project said columns from the expression.
 
->`PROJECT [s_id, name] (student)`
+>`PROJECT [s_id, name] (student);`
 
-* `RENAME [comma_seperated_column_names] (expression)` : Rename said columns from the expression.
+* `RENAME [comma_seperated_column_names] (expression);` : Rename said columns from the expression.
 
-* `AGGREGATE [function : column] (expression)` : Run the aggregate function `function` on the column `column`. The following functions are built-in
+* `AGGREGATE [function : column] (expression);` : Run the aggregate function `function` on the column `column`. The following functions are built-in
 
 >`MAX : column_name`
 
@@ -50,43 +50,43 @@ Here, a `value` is either a column name or a value. Operating on two values of d
 
 >`COUNT : column_name`, displays the count of each value in the relation.
 
-* `expression * expression` : Cartesian product
+* `expression * expression;` : Cartesian product
 
-* `expression + expression` : Union
+* `expression + expression;` : Union
 
-* `expression ^ expression` : Intersection
+* `expression ^ expression;` : Intersection
 
-* `expression @ expression` : Natural join
+* `expression @ expression;` : Natural join
 
-* `expression - expression` : Set difference
+* `expression - expression;` : Set difference
 
-* `[view_name] ~ expression` : Create a view with the identifier `view_name`.
+* `[view_name] ~ expression;` : Create a view with the identifier `view_name`.
 
-* `[table_name] <- expression` : Store the relation with name `table_name` in the database.
+* `[table_name] <- expression;` : Store the relation with name `table_name` in the database.
 
 ###Example
 
 Some example queries have been given below.
 
-`[student] <- RENAME [s_id, f_name, l_name, dept_id] ({1, "Shubham", "Chaudhary", 1})`
+`[student] <- RENAME [s_id, f_name, l_name, dept_id] ({1, "Shubham", "Chaudhary", 1});`
 
-`[student] <- student ^ {2, "Shivam", "Garg", 1}`
+`[student] <- student ^ {2, "Shivam", "Garg", 1};`
 
-`SELECT [s_id > 3 && f_name =/= "Shubham"] (student)`
+`SELECT [s_id > 3 && f_name =/= "Shubham"] (student);`
 
-`student @ department`
+`student @ department;`
 
-`[marks] <- RENAME [s_id, eng, phy] ({1, 98.0, 95.0})`
+`[marks] <- RENAME [s_id, eng, phy] ({1, 98.0, 95.0});`
 
-`[marks] <- marks + {3, 98.1, 92.0}`
+`[marks] <- marks + {3, 98.1, 92.0};`
 
-`PROJECT [AVG : eng] (marks)`
+`PROJECT [AVG : eng] (marks);`
 
-`[min_eng] ~ PROJECT [s_id] (marks @ RENAME [eng] (marks))`
+`[min_eng] ~ PROJECT [s_id] (marks @ RENAME [eng] (marks));`
 
 __Explanation__: It then assigns the `min_eng` with the view containing the `s_id`s of the `student`s with minimum marks in `eng`.
 
-`(student @ min_eng) @ department` will give all the details of the student with minimum marks in english. The result of the query will change in accordance with the original data.
+`(student @ min_eng) @ department;` will give all the details of the student with minimum marks in english. The result of the query will change in accordance with the original data.
 
 Other queries have been given in file `queries.sra`. Formal syntax is defined in EBNF form in `syntax.ebnf`.
 
@@ -94,13 +94,13 @@ Other queries have been given in file `queries.sra`. Formal syntax is defined in
 
 The following utility commands are available
 
-> `:quit` : Quit the program
+> `:quit;` : Quit the program
 
-> `:help` : Show program help
+> `:help;` : Show program help
 
-> `:drop <table>` : Drop the table with specified name
+> `:drop table_ name;` : Drop the table with specified name
 
-> `:showall` : Show the basic information of the whole database, i.e the schema and no. of tuples of all tables and description of all views.
+> `:showall;` : Show the basic information of the whole database, i.e the schema and no. of tuples of all tables and description of all views.
 
 ### Caveats
 
