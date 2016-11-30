@@ -16,16 +16,17 @@ compexp = ( identifier | value ) comp ( identifier | value )
 predicate = compexp
           | predicate boolean predicate
           | "!" predicate
-          | "(" predicate ")" 
+          | "(" predicate ")" [ boolean predicate ]
 tuple = "{" identifier ":" value { "," identifier ":" value } "}"
 aggregate = "MAX" | "MIN" | "SUM" | "AVG" | "COUNT"
-expression = tuple
-           | identifier
-           | "SELECT" "[" predicate "]" "(" expression ")"
-           | "AGGREGATE" "[" aggregate ":" identifier "]" "(" expression ")"
-           | ("RENAME" | "PROJECT") "[" identifier { "," identifier } "]" "(" expression ")"
-           | "(" expression ")"
+simpexpression = tuple
+               | identifier
+               | "SELECT" "[" predicate "]" "(" expression ")"
+               | "AGGREGATE" "[" aggregate ":" identifier "]" "(" expression ")"
+               | ("RENAME" | "PROJECT") "[" identifier { "," identifier } "]" "(" expression ")"
+expression = simpexpression
            | expression binary expression
+           | "(" expression ")" [ binary expression ]
 operation = "~" | "<-"
 statement = expression
           | "[" identifier "]" operation expression ";"
