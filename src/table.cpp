@@ -391,7 +391,7 @@ Table Table::aggregate(const AggregateOperation& a, const std::string& col_name)
     if (a == AggregateOperation::Min)
         return min(col_name);
 
-    else if (a == AggregateOperation::Min)
+    else if (a == AggregateOperation::Max)
         return max(col_name);
 
     else if (a == AggregateOperation::Sum)
@@ -422,7 +422,7 @@ Table Table::count(const std::string& col) const {
 
     for (auto& rows : table) {
         if (count_map.find(rows[idx]) == count_map.end()) {
-            count_map[rows[idx]] = 0;
+            count_map[rows[idx]] = 1;
         } else {
             count_map[rows[idx]] += 1;
         }
