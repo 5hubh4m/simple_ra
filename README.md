@@ -12,7 +12,7 @@ keyboard, some changes have been made. Below is a brief description of the synta
 
 * `table_name;` : Displays whole view/table from a view/table named `table_name`
 
-* `SELECT [predicate] (expression);` : Select using a predicate from expression. Predicate is a list of elementary boolean expressions. The following predicate expressions are valid
+* `SELECT [predicate] (expression);` : Select using a predicate from expression. Predicate is a list of elementary boolean expressions. The following predicate expressions are valid. The predicate expression is right associative and precedence of `&&` and `||` is the same.
 
 >`value > value`
 
@@ -63,6 +63,8 @@ Here, a `value` is either a column name or a value. Operating on two values of d
 * `[view_name] ~ expression;` : Create a view with the identifier `view_name`.
 
 * `[table_name] <- expression;` : Store the relation with name `table_name` in the database.
+
+The binary operations are right associative and precedence of all operations is the same.
 
 ###Example
 
