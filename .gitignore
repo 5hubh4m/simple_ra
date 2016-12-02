@@ -1,5 +1,4 @@
-.DS_Store
-src/.DS_Store
+*.DS_Store
 *.dSYM
 simple_ra
 *.o

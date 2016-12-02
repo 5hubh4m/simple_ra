@@ -1,25 +1,26 @@
 CC = g++
-CCFLAGS = -W -Wall -std=c++1y
-INCLUDE = -Isrc/
-LD = -lreadline
-SRC = src/simple_ra.cpp src/storage.cpp src/parser.cpp src/expression.cpp src/table.cpp src/cell.cpp 
-EXE = simple_ra
+CXXFLAGS = -W -Wall -std=c++1y
+INCLUDES =
+LFLAGS =
+LIBS = -lreadline
+SRCS = simple_ra.cpp storage.cpp parser.cpp expression.cpp table.cpp cell.cpp
+OBJS = $(SRCS:.cpp=.o)
+MAIN = simple_ra
 DEBUG = -D DEBUG -g
+VPATH = src
 
-.PHONY: clean distclean
+.PHONY : depend clean
 
-all:	build
+all : $(MAIN)
 
-clean:	distclean
+$(MAIN) : $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
-distclean:
-	rm -rf *o ${EXE} .data* *.dSYM
+%.o : %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<  -o $@
 
-build: 
-	${CC} ${CCFLAGS} ${SRC} ${INCLUDE} -o ${EXE} ${LD} 
+clean :
+	$(RM) *.o *~ $(MAIN) .data* *.dSYM
 
-debug:
-	${CC} ${DEBUG} ${CCFLAGS} ${SRC} ${INCLUDE} -o ${EXE} ${LD} 
-
-run:
-	./${EXE}
+run :
+	@./$(MAIN)

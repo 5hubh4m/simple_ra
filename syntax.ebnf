@@ -1,4 +1,4 @@
-Formal Syntax for simple_ra
+Formal Syntax for simple_ra's Relational Algebra
 
 small = "a" .. "z"
 caps = "A" .. "Z"
@@ -9,27 +9,33 @@ integer = [ "+" | "-" ] digit {digit}
 number = [ "+" | "-" ] ( integer "." integer | integer )
 string = "\"" char { char } "\""
 value = string | number
+
 comp = "=" | "/=" | "<=" | ">=" | "<" | ">"
 boolean = "&&" | "||"
 binary = "X" | "U" | "^" | "-" | "@"
-compexp = ( identifier | value ) comp ( identifier | value )
-predicate = compexp
-          | predicate boolean predicate
-          | "!" predicate
-          | "(" predicate ")" [ boolean predicate ]
+operation = "~" | "<-"
+
+compare = ( identifier | value ) comp ( identifier | value )
+predicate  =  frontpred backpred
+backpred = boolean frontpred [ backpred ]
+frontpred = [ "!" ] basepred
+basepred = "(" predicate ")" | compare
+
 tuple = "{" identifier ":" value { "," identifier ":" value } "}"
 aggregate = "MAX" | "MIN" | "SUM" | "AVG" | "COUNT"
-simpexpression = tuple
-               | identifier
-               | "SELECT" "[" predicate "]" "(" expression ")"
-               | "AGGREGATE" "[" aggregate ":" identifier "]" "(" expression ")"
-               | ("RENAME" | "PROJECT") "[" identifier { "," identifier } "]" "(" expression ")"
-expression = simpexpression
-           | expression binary expression
-           | "(" expression ")" [ binary expression ]
-operation = "~" | "<-"
+
+simpexp = tuple
+        | identifier
+        | "SELECT" "[" predicate "]" "(" expression ")"
+        | "AGGREGATE" "[" aggregate ":" identifier "]" "(" expression ")"
+        | ("RENAME" | "PROJECT") "[" identifier { "," identifier } "]" "(" expression ")"
+expression = frontexp backexp
+backexp = binary frontexp [ backexp ]
+frontexp = "(" expression ")" | simpexpression
+
 statement = expression
           | "[" identifier "]" operation expression ";"
+          
 command = "quit" | "help" | "showall"
 utility = "drop"
 command = ":" ( command | utility identifier ) ";"

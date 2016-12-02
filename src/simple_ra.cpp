@@ -16,14 +16,14 @@ Database RelationalAlgebra::database;
 int main (void) {
     std::unique_ptr<Statement> stmt;
 
-    std::cout << "/***********************************************************" << std::endl
+    std::cout << "************************************************************" << std::endl
               << "*                         simple_ra                        *" << std::endl              
               << "*                                                          *" << std::endl
               << "*  The (not so simple) Relational Algebra Interpreter. See *" << std::endl
               << "*  README.md for information related to the usage of the   *" << std::endl
               << "*  software. The syntax is described in 'syntax.ebnf'.     *" << std::endl
               << "*  Enter the command ':quit' to quit and ':help' for help. *" << std::endl
-              << "***********************************************************/" << std::endl;
+              << "************************************************************" << std::endl;
 
     while (true) {
         std::string line = rl_gets();
@@ -34,10 +34,8 @@ int main (void) {
         try {
             stmt = std::unique_ptr<Statement>(parse_statement(line));
             stmt->exec();
-        } catch (ParseError& e) {
-            std::cout << "Parsing error occured! Please check your query." << std::endl;            
-        } catch (std::runtime_error &e) {
-            std::cout << "Runtime error! " << e.what() << std::endl;
+        } catch (std::exception& e) {
+            std::cout << "Error! " << e.what() << std::endl;
         }
     }
 }

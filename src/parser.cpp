@@ -7,13 +7,10 @@
 #include "expression.hpp"
 #include "parser.hpp"
 
-#define Bool(T) std::pair<bool, T>
-#define Pair(x, y) std::make_pair(x, y)
-
 using namespace RelationalAlgebra;
 
 const char* ParseError::what() const throw() {
-    return "Parsing error.";
+    return error.c_str();
 }
 
 // Parsing functions for LL(1) recursive descent.
@@ -31,31 +28,36 @@ bool project(std::istream&);
 bool rename(std::istream&);
 bool negate(std::istream&);
 
-Bool(int)         digit(std::istream&);
-Bool(int)         number(std::istream&);
-Bool(char)        character(std::istream&);
-Bool(char)        smallalpha_score(std::istream&);
-Bool(char)        alpha_score_digit(std::istream&);
-Bool(std::string) string(std::istream&);
-Bool(std::string) identifier(std::istream&);
-Bool(std::string) comma_identifier(std::istream&);
+std::pair<bool, int>         digit(std::istream&);
+std::pair<bool, int>         number(std::istream&);
+std::pair<bool, char>        character(std::istream&);
+std::pair<bool, char>        smallalpha_score(std::istream&);
+std::pair<bool, char>        alpha_score_digit(std::istream&);
+std::pair<bool, std::string> string(std::istream&);
+std::pair<bool, std::string> identifier(std::istream&);
+std::pair<bool, std::string> comma_identifier(std::istream&);
 
-Bool(Cell)  cell(std::istream&);
-Bool(Cell)  comma_cell(std::istream&);
-Bool(Tuple) tuple(std::istream& in);
+std::pair<bool, Cell>  cell(std::istream&);
+std::pair<bool, Cell>  comma_cell(std::istream&);
+std::pair<bool, Tuple> tuple(std::istream& in);
 
-Bool(ComparisionOperation) comparision(std::istream&);
-Bool(BinaryOperation)      binary(std::istream&);
-Bool(BooleanOperation)     boolean(std::istream&);
-Bool(AggregateOperation)   aggregate_func(std::istream&);
-Bool(StatementOperation)   operation(std::istream&);
-Bool(Command)              command(std::istream&);
+std::pair<bool, ComparisionOperation> comparision(std::istream&);
+std::pair<bool, BinaryOperation>      binary(std::istream&);
+std::pair<bool, BooleanOperation>     boolean(std::istream&);
+std::pair<bool, AggregateOperation>   aggregate_func(std::istream&);
+std::pair<bool, StatementOperation>   operation(std::istream&);
+std::pair<bool, Command>              command(std::istream&);
 
-Bool(BasicPredicate*) comp_exp(std::istream&);
-Bool(Predicate*)      predicate(std::istream&);
-Bool(Expression*)     unary_expression(std::istream&);
-Bool(Expression*)     expression(std::istream&);
-Bool(Statement*)      statement(std::istream&);
+std::pair<bool, Predicate*>                              comp_exp(std::istream&);
+std::pair<bool, Predicate*>                              basepred(std::istream&);
+std::pair<bool, Predicate*>                              frontpred(std::istream&);
+std::pair<bool, std::pair<BooleanOperation, Predicate*>> backpred(std::istream&);
+std::pair<bool, Predicate*>                              predicate(std::istream&);
+std::pair<bool, Expression*>                             unary_expression(std::istream&);
+std::pair<bool, Expression*>                             frontexp(std::istream&);
+std::pair<bool, std::pair<BinaryOperation, Expression*>> backexp(std::istream&);
+std::pair<bool, Expression*>                             expression(std::istream&);
+std::pair<bool, Statement*>                              statement(std::istream&);
 
 // End of declarations
 
@@ -64,12 +66,12 @@ Bool(Statement*)      statement(std::istream&);
 Statement* RelationalAlgebra::parse_statement(const std::string& input) {
     std::stringstream in(input, std::ios_base::in);
 
-    Bool(Statement*) s = statement(in);
+    std::pair<bool, Statement*> s = statement(in);
     
     if (!s.first) {
         delete s.second;
         
-        throw ParseError();
+        throw ParseError(in.tellg());
     } else {
         return s.second;
     }
@@ -78,12 +80,12 @@ Statement* RelationalAlgebra::parse_statement(const std::string& input) {
 Expression* RelationalAlgebra::parse_expression(const std::string& input) {
     std::stringstream in(input, std::ios_base::in);
 
-    Bool(Expression*) s = expression(in);
+    std::pair<bool, Expression*> s = expression(in);
     
     if (!s.first) {
         delete s.second;
         
-        throw ParseError();
+        throw ParseError(in.tellg());
     } else {
         return s.second;
     }
@@ -116,18 +118,18 @@ bool end(std::istream& in) {
     }
 }
 
-Bool(int) digit(std::istream& in) {
+std::pair<bool, int> digit(std::istream& in) {
     if (isdigit(in.peek())) {
         char s = in.get();
 
-        return Pair(true, s - '0');
+        return std::make_pair(true, s - '0');
     } else {
-        return Pair(false, 0);
+        return std::make_pair(false, 0);
     }
 }
 
-Bool(int) number(std::istream& in) {
-    Bool(int) a;
+std::pair<bool, int> number(std::istream& in) {
+    std::pair<bool, int> a;
     std::string num;
 
     if ((a = digit(in)).first) {
@@ -137,13 +139,13 @@ Bool(int) number(std::istream& in) {
             num += (a.second + '0');
         }
 
-        return Pair(true, std::stoi(num));
+        return std::make_pair(true, std::stoi(num));
     } else {
-        return Pair(false, 0);
+        return std::make_pair(false, 0);
     }
 }
 
-Bool(char) character(std::istream& in) {
+std::pair<bool, char> character(std::istream& in) {
     char c;
 
     if (in.peek() == '\\') {
@@ -152,29 +154,29 @@ Bool(char) character(std::istream& in) {
         if (in.peek() == '\\') {
             in.get();
 
-            return Pair(true, '\\');
+            return std::make_pair(true, '\\');
         } else if (in.peek() == '\"') {
             in.get();
 
-            return Pair(true, '\"');
+            return std::make_pair(true, '\"');
         } else if (in.peek() == ';') {
             in.get();
             
-            return Pair(true, ';');
+            return std::make_pair(true, ';');
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else if (in.peek() != '\"') {
         c = in.get();
 
-        return Pair(true, c);
+        return std::make_pair(true, c);
     } else {
-        return Pair(false, 0);
+        return std::make_pair(false, 0);
     }
 }
 
-Bool(std::string) string(std::istream& in) {
-    Bool(char) c;
+std::pair<bool, std::string> string(std::istream& in) {
+    std::pair<bool, char> c;
     std::string s;
 
     if (in.peek() == '\"') {
@@ -188,26 +190,26 @@ Bool(std::string) string(std::istream& in) {
             }
 
             if (in.get() == '\"') {
-                return Pair(true, s);
+                return std::make_pair(true, s);
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, std::string());
+        return std::make_pair(false, std::string());
     }
 }
 
-Bool(Cell) cell(std::istream& in) {
-    Bool(std::string) s;
-    Bool(int) i;
-    Bool(float) f;
+std::pair<bool, Cell> cell(std::istream& in) {
+    std::pair<bool, std::string> s;
+    std::pair<bool, int> i;
+    std::pair<bool, float> f;
     Cell c;
 
     if ((s = string(in)).first) {
-        return Pair(true, Cell(s.second));
+        return std::make_pair(true, Cell(s.second));
     } else {
         bool issigned = false, neg = false;
 
@@ -229,25 +231,25 @@ Bool(Cell) cell(std::istream& in) {
                 if ((i = number(in)).first) {
                     a += std::to_string(i.second);
 
-                    return Pair(true, Cell(neg ? -std::stof(a) : std::stof(a)));
+                    return std::make_pair(true, Cell(neg ? -std::stof(a) : std::stof(a)));
                 } else {
-                    throw ParseError();
+                    throw ParseError(in.tellg());
                 }
             } else {
-                return Pair(true, Cell(neg ? -i.second : i.second));
+                return std::make_pair(true, Cell(neg ? -i.second : i.second));
             }
         } else {
             if (issigned) {
-                throw ParseError();
+                throw ParseError(in.tellg());
             } else {
-                return Pair(false, Cell());
+                return std::make_pair(false, Cell());
             }
         }
     }
 }
 
-Bool(Cell) comma_cell(std::istream& in) {
-    Bool(Cell) c;
+std::pair<bool, Cell> comma_cell(std::istream& in) {
+    std::pair<bool, Cell> c;
 
     if (in.peek() == ',') {
         in.get();
@@ -257,15 +259,15 @@ Bool(Cell) comma_cell(std::istream& in) {
         if ((c = cell(in)).first) {
             return c;
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, Cell());
+        return std::make_pair(false, Cell());
     }
 }
 
-Bool(Tuple) tuple(std::istream& in) {
-    Bool(Cell) c;
+std::pair<bool, Tuple> tuple(std::istream& in) {
+    std::pair<bool, Cell> c;
     Tuple tup;
 
     if (in.peek() == '{') {
@@ -285,44 +287,44 @@ Bool(Tuple) tuple(std::istream& in) {
             }
 
             if (in.get() == '}') {
-                return Pair(true, tup);
+                return std::make_pair(true, tup);
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, Tuple());
+        return std::make_pair(false, Tuple());
     }
 }
 
-Bool(char) smallalpha_score(std::istream& in) {
+std::pair<bool, char> smallalpha_score(std::istream& in) {
     char c;
 
     if ((in.peek() >= 'a'  && in.peek() <= 'z') || in.peek() == '_') {
         c = in.get();
 
-        return Pair(true, c);
+        return std::make_pair(true, c);
     } else {
-        return Pair(false, 0);
+        return std::make_pair(false, 0);
     }
 }
 
-Bool(char) alpha_score_digit(std::istream& in) {
+std::pair<bool, char> alpha_score_digit(std::istream& in) {
     char c;
 
     if (isalpha(in.peek()) || isdigit(in.peek()) || in.peek() == '_') {
         c = in.get();
 
-        return Pair(true, c);
+        return std::make_pair(true, c);
     } else {
-        return Pair(false, 0);
+        return std::make_pair(false, 0);
     }
 }
 
-Bool(std::string) identifier(std::istream& in) {
-    Bool(char) c;
+std::pair<bool, std::string> identifier(std::istream& in) {
+    std::pair<bool, char> c;
     std::string s;
 
 
@@ -333,13 +335,13 @@ Bool(std::string) identifier(std::istream& in) {
             s.push_back(c.second);
         }
 
-        return Pair(true, s);
+        return std::make_pair(true, s);
     } else {
-        return Pair(false, std::string());
+        return std::make_pair(false, std::string());
     }
 }
 
-Bool(ComparisionOperation) comparision(std::istream& in) {
+std::pair<bool, ComparisionOperation> comparision(std::istream& in) {
     if (in.peek() == '=') {
         in.get();
 
@@ -347,31 +349,31 @@ Bool(ComparisionOperation) comparision(std::istream& in) {
             in.get();
 
             if (in.get() == '=') {
-                return Pair(true, ComparisionOperation::NotEqual);
+                return std::make_pair(true, ComparisionOperation::NotEqual);
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         }
 
-        return Pair(true, ComparisionOperation::Equal);
+        return std::make_pair(true, ComparisionOperation::Equal);
     } else if (in.peek() == '<' || in.peek() == '>') {
         char c = in.get();
 
         if (in.peek() == '=') {
             in.get();
 
-            return Pair(true, (c == '<' ? ComparisionOperation::LessThanEqual
+            return std::make_pair(true, (c == '<' ? ComparisionOperation::LessThanEqual
                                         : ComparisionOperation::GreaterThanEqual));
         }
 
-        return Pair(true, (c == '<' ? ComparisionOperation::LessThan
+        return std::make_pair(true, (c == '<' ? ComparisionOperation::LessThan
                                     : ComparisionOperation::GreaterThan));
     } else {
-        return Pair(false, ComparisionOperation::NotEqual);
+        return std::make_pair(false, ComparisionOperation::NotEqual);
     }
 }
 
-Bool(BinaryOperation) binary(std::istream& in) {
+std::pair<bool, BinaryOperation> binary(std::istream& in) {
     if (in.peek() == '+' ||
         in.peek() == '*' ||
         in.peek() == '^' ||
@@ -399,31 +401,31 @@ Bool(BinaryOperation) binary(std::istream& in) {
             break;
         }
 
-        return Pair(true, op);
+        return std::make_pair(true, op);
     } else {
-        return Pair(false, BinaryOperation::Union);
+        return std::make_pair(false, BinaryOperation::Union);
     }
 }
 
-Bool(BooleanOperation) boolean(std::istream& in) {
+std::pair<bool, BooleanOperation> boolean(std::istream& in) {
     if (in.peek() == '&') {
         in.get();
 
         if (in.get() == '&') {
-            return Pair(true, BooleanOperation::And);
+            return std::make_pair(true, BooleanOperation::And);
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else if (in.peek() == '|') {
         in.get();
 
         if (in.get() == '|') {
-            return Pair(true, BooleanOperation::Or);
+            return std::make_pair(true, BooleanOperation::Or);
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, BooleanOperation::Or);
+        return std::make_pair(false, BooleanOperation::Or);
     }
 }
 
@@ -437,10 +439,10 @@ bool negate(std::istream& in) {
     }
 }
 
-Bool(BasicPredicate*) comp_exp(std::istream& in) {
-    Bool(std::string) i1, i2;
-    Bool(Cell) c1, c2;
-    Bool(ComparisionOperation) op;
+std::pair<bool, Predicate*> comp_exp(std::istream& in) {
+    std::pair<bool, std::string> i1, i2;
+    std::pair<bool, Cell> c1, c2;
+    std::pair<bool, ComparisionOperation> op;
 
     if ((i1 = identifier(in)).first || (c1 = cell(in)).first) {
         space(in);
@@ -463,31 +465,22 @@ Bool(BasicPredicate*) comp_exp(std::istream& in) {
                 if (i1.first && c2.first)
                     pred = new BasicPredicate(i1.second, op.second, c2.second);
 
-                return Pair(true, pred);
+                return std::make_pair(true, pred);
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, nullptr);
+        return std::make_pair(false, nullptr);
     }
 }
 
-Bool(Predicate*) predicate(std::istream& in) {
-    Bool(Predicate*) p, p2;
-    Bool(BooleanOperation) op;
+std::pair<bool, Predicate*> basepred(std::istream& in) {
+    std::pair<bool, Predicate*> p;
 
-    if (negate(in)) {
-        space(in);
-
-        if ((p = predicate(in)).first) {
-            return Pair(true, new NotPredicate(p.second));
-        } else {
-            throw ParseError();
-        }
-    } else if (in.peek() == '(') {
+    if (in.peek() == '(') {
         in.get();
         space(in);
 
@@ -497,45 +490,78 @@ Bool(Predicate*) predicate(std::istream& in) {
             if (in.get() == ')') {
                 space(in);
                 
-                if ((op = boolean(in)).first) {
-                    space(in);
-                    
-                    if ((p2 = predicate(in)).first) {
-                        return Pair(true, new BinaryPredicate(p.second, op.second, p2.second));
-                    } else {
-                        delete p.second;
-                        
-                        throw ParseError();
-                    }
-                } else {
-                    return p;
-                }
+                return p;
             } else {
                 delete p.second;
                 
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
-    } else if ((p = comp_exp(in)).first) {
+    } else if ((p = comp_exp(in)).second) {
+        return p;
+    } else {
+        return std::make_pair(false, nullptr);
+    }
+}
+
+std::pair<bool, Predicate*> frontpred(std::istream& in) {
+    std::pair<bool, Predicate*> p;
+    
+    if (negate(in)) {
         space(in);
 
-        if ((op = boolean(in)).first) {
+        if ((p = basepred(in)).second) {
+            return std::make_pair(true, new NotPredicate(p.second));
+        } else {
+            throw ParseError(in.tellg());
+        }
+    } else if ((p = basepred(in)).second) {
+        return p;
+    } else {
+        return std::make_pair(false, nullptr);
+    }
+}
+
+std::pair<bool, std::pair<BooleanOperation, Predicate*>> backpred(std::istream& in) {
+    std::pair<bool, Predicate*> p;
+    std::pair<bool, std::pair<BooleanOperation, Predicate*>> bp;
+    std::pair<bool, BooleanOperation> op;
+
+    if ((op = boolean(in)).first) {
+        space(in);
+
+        if ((p = frontpred(in)).second) {
             space(in);
 
-            if ((p2 = predicate(in)).first) {
-                return Pair(true, new BinaryPredicate(p.second, op.second, p2.second));
+            if ((bp = backpred(in)).first) {
+                return std::make_pair(true, std::make_pair(op.second, new BinaryPredicate(p.second, bp.second.first, bp.second.second)));
             } else {
-                delete p.second;
-                
-                throw ParseError();
+                return std::make_pair(true, std::make_pair(op.second, p.second));
             }
+        } else {
+            throw ParseError(in.tellg());
+        }
+    } else {
+        return std::make_pair(false, std::make_pair(BooleanOperation::And, nullptr));
+    }
+}
+
+std::pair<bool, Predicate*> predicate(std::istream& in) {
+    std::pair<bool, Predicate*> p;
+    std::pair<bool, std::pair<BooleanOperation, Predicate*>> bp;
+
+    if ((p = frontpred(in)).first) {
+        space(in);
+
+        if ((bp = backpred(in)).first) {
+            return std::make_pair(true, new BinaryPredicate(p.second, bp.second.first, bp.second.second));
         } else {
             return p;
         }
     } else {
-        return Pair(false, nullptr);
+        return std::make_pair(false, nullptr);
     }
 }
 
@@ -549,7 +575,7 @@ bool select(std::istream& in) {
         if (s == "SELECT") {
             return true;
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
         return false;
@@ -566,7 +592,7 @@ bool project(std::istream& in) {
         if (s == "PROJECT") {
             return true;
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
         return false;
@@ -583,7 +609,7 @@ bool rename(std::istream& in) {
         if (s == "RENAME") {
             return true;
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
         return false;
@@ -600,14 +626,14 @@ bool aggregate(std::istream& in) {
         if (s == "AGGREGATE") {
             return true;
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
         return false;
     }
 }
 
-Bool(AggregateOperation) aggregatefunc(std::istream& in) {
+std::pair<bool, AggregateOperation> aggregatefunc(std::istream& in) {
     AggregateOperation op;
 
     if (in.peek() == 'M' || in.peek() == 'A' || in.peek() == 'S') {
@@ -625,10 +651,10 @@ Bool(AggregateOperation) aggregatefunc(std::istream& in) {
         } else if (s == "SUM") {
             op = AggregateOperation::Count;
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
 
-        return Pair(true, op);
+        return std::make_pair(true, op);
     } else if (in.peek() == 'C') {
         std::string s;
         for (int i = 0; i < 5; i++) {
@@ -636,17 +662,17 @@ Bool(AggregateOperation) aggregatefunc(std::istream& in) {
         }
 
         if (s == "COUNT") {
-            return Pair(true, AggregateOperation::Count);
+            return std::make_pair(true, AggregateOperation::Count);
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, op);
+        return std::make_pair(false, op);
     }
 }
 
-Bool(std::string) comma_identifier(std::istream& in) {
-    Bool(std::string) s;
+std::pair<bool, std::string> comma_identifier(std::istream& in) {
+    std::pair<bool, std::string> s;
 
     if (in.peek() == ',') {
         in.get();
@@ -656,20 +682,20 @@ Bool(std::string) comma_identifier(std::istream& in) {
         if ((s = identifier(in)).first) {
             return s;
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, std::string());
+        return std::make_pair(false, std::string());
     }
 }
 
-Bool(Expression*) unary_expression(std::istream& in) {
-    Bool(Tuple) t;
-    Bool(std::string) s;
-    Bool(Predicate*) p;
-    Bool(Expression*) e1;
-    Bool(AggregateOperation) agop;
-    Bool(BinaryOperation) binop;
+std::pair<bool, Expression*> unary_expression(std::istream& in) {
+    std::pair<bool, Tuple> t;
+    std::pair<bool, std::string> s;
+    std::pair<bool, Predicate*> p;
+    std::pair<bool, Expression*> e1;
+    std::pair<bool, AggregateOperation> agop;
+    std::pair<bool, BinaryOperation> binop;
     std::vector<std::string> cols;
     bool proj = false, ren = false;
     Expression* e;
@@ -685,9 +711,9 @@ Bool(Expression*) unary_expression(std::istream& in) {
 
         tbl += t.second;
 
-        return Pair(true, new TupleExpression(tbl));
+        return std::make_pair(true, new TupleExpression(tbl));
     } else if ((s = identifier(in)).first) {
-        return Pair(true, new TableExpression(s.second));
+        return std::make_pair(true, new TableExpression(s.second));
     } else if (select(in)) {
         space(in);
 
@@ -707,33 +733,33 @@ Bool(Expression*) unary_expression(std::istream& in) {
                             space(in);
 
                             if (in.get() == ')') {
-                                return Pair(true, new SelectExpression(p.second, e1.second));
+                                return std::make_pair(true, new SelectExpression(p.second, e1.second));
                             } else {
                                 delete e1.second;
                                 delete p.second;
                                 
-                                throw ParseError();
+                                throw ParseError(in.tellg());
                             }
                         } else {
                             delete p.second;
 
-                            throw ParseError();
+                            throw ParseError(in.tellg());
                         }
                     } else {
                         delete p.second;
 
-                        throw ParseError();
+                        throw ParseError(in.tellg());
                     }
                 } else {
                     delete p.second;
 
-                    throw ParseError();
+                    throw ParseError(in.tellg());
                 }
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else if ((proj = project(in)) || (ren = rename(in))) {
         space(in);
@@ -770,26 +796,26 @@ Bool(Expression*) unary_expression(std::istream& in) {
                                     e = new RenameExpression(cols, e1.second);
                                 }
                                 
-                                return Pair(true, e);
+                                return std::make_pair(true, e);
                             } else {
                                 delete e1.second;
                                 
-                                throw ParseError();
+                                throw ParseError(in.tellg());
                             }
                         } else {
-                            throw ParseError();
+                            throw ParseError(in.tellg());
                         }
                     } else {
-                        throw ParseError();
+                        throw ParseError(in.tellg());
                     }
                 } else {
-                    throw ParseError();
+                    throw ParseError(in.tellg());
                 }
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else if (aggregate(in)) {
         space(in);
@@ -816,119 +842,132 @@ Bool(Expression*) unary_expression(std::istream& in) {
                                     space(in);
 
                                     if (in.get() == ')') {
-                                        return Pair(true, new AggregateExpression(agop.second, s.second, e1.second));
+                                        return std::make_pair(true, new AggregateExpression(agop.second, s.second, e1.second));
                                     } else {
                                         delete e1.second;
                                         
-                                        throw ParseError();
+                                        throw ParseError(in.tellg());
                                     }
                                 } else {
-                                    throw ParseError();
+                                    throw ParseError(in.tellg());
                                 }
                             } else {
-                                throw ParseError();
+                                throw ParseError(in.tellg());
                             }
                         } else {
-                            throw ParseError();
+                            throw ParseError(in.tellg());
                         }
                     } else {
-                        throw ParseError();
+                        throw ParseError(in.tellg());
                     }
                 } else {
-                    throw ParseError();
+                    throw ParseError(in.tellg());
                 }
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, nullptr);
+        return std::make_pair(false, nullptr);
     }
 }
 
-Bool(Expression*) expression(std::istream& in) {
-    Bool(Tuple) t;
-    Bool(std::string) s;
-    Bool(Predicate*) p;
-    Bool(Expression*) e1, e2;
-    Bool(AggregateOperation) agop;
-    Bool(BinaryOperation) binop;
-    std::vector<std::string> cols;
+
+std::pair<bool, Expression*> frontexp(std::istream& in) {
+    std::pair<bool, Expression*> e;
 
     if (in.peek() == '(') {
         in.get();
 
         space(in);
 
-        if ((e1 = expression(in)).first) {
+        if ((e = expression(in)).first) {
             space(in);
 
             if (in.get() == ')') {
                 space(in);
 
-                if ((binop = binary(in)).first) {
-                    space(in);
-
-                    if ((e2 = expression(in)).first) {
-                        return Pair(true, new BinaryExpression(e1.second, binop.second, e2.second));
-                    } else {
-                        delete e1.second;
-
-                        throw ParseError();
-                    }
-                } else {
-                    return e1;
-                }
+                return e;
             } else {
-                delete e1.second;
+                delete e.second;
                 
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
-    } else if ((e1 = unary_expression(in)).first) {
+    } else if ((e = unary_expression(in)).first) {
         space(in);
 
-        if ((binop = binary(in)).first) {
-            space(in);
-
-            if ((e2 = expression(in)).first) {
-                return Pair(true, new BinaryExpression(e1.second, binop.second, e2.second));
-            } else {
-                delete e1.second;
-                
-                throw ParseError();
-            }
-        } else {
-            return e1;
-        }
+        return e;
     } else {
-        return Pair(false, nullptr);
+        return std::make_pair(false, nullptr);
     }
 }
 
-Bool(StatementOperation) operation(std::istream& in) {
+std::pair<bool, std::pair<BinaryOperation, Expression*>> backexp(std::istream& in) {
+    std::pair<bool, Expression*> e;
+    std::pair<bool, BinaryOperation> binop;
+    std::pair<bool, std::pair<BinaryOperation, Expression*>> bexp;
+
+    if ((binop = binary(in)).first) {
+        space(in);
+
+        if ((e = frontexp(in)).first) {
+            space(in);
+
+            if ((bexp = backexp(in)).first) {
+                return std::make_pair(true, std::make_pair(binop.second, new BinaryExpression(e.second, bexp.second.first, bexp.second.second)));
+            } else {
+                return std::make_pair(true, std::make_pair(binop.second, e.second));
+            }
+        } else {
+            throw ParseError(in.tellg());
+        }
+    } else {
+        return std::make_pair(false, std::make_pair(BinaryOperation::Union, nullptr));
+    }
+}
+
+
+std::pair<bool, Expression*> expression(std::istream& in) {
+    std::pair<bool, Expression*> e;
+    std::pair<bool, std::pair<BinaryOperation, Expression*>> bexp;
+
+    if ((e = frontexp(in)).first) {
+        space(in);
+
+        if ((bexp = backexp(in)).first) {
+            return std::make_pair(true, new BinaryExpression(e.second, bexp.second.first, bexp.second.second));
+        } else {
+            return e;
+        }
+    } else {
+        return std::make_pair(false, nullptr);
+    }
+}
+
+std::pair<bool, StatementOperation> operation(std::istream& in) {
     if (in.peek() == '~') {
         in.get();
 
-        return Pair(true, StatementOperation::CreateView);
+        return std::make_pair(true, StatementOperation::CreateView);
     } else if (in.peek() == '<') {
         in.get();
 
         if (in.get() == '-') {
-            return Pair(true, StatementOperation::StoreTable);
+            return std::make_pair(true, StatementOperation::StoreTable);
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, StatementOperation::CreateView);
+        return std::make_pair(false, StatementOperation::CreateView);
     }
 }
 
-Bool(Command) command(std::istream& in) {
+std::pair<bool, Command> command(std::istream& in) {
     std::string s;
 
     if (in.peek() == 'q' || in.peek() == 'h') { 
@@ -937,11 +976,11 @@ Bool(Command) command(std::istream& in) {
         }
 
         if (s == "quit") {
-            return Pair(true, Command::Quit);
+            return std::make_pair(true, Command::Quit);
         } else if (s == "help") {
-            return Pair(true, Command::Help);
+            return std::make_pair(true, Command::Help);
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else if (in.peek() == 's') {
         for (size_t i = 0; i <7; i++) {
@@ -949,21 +988,21 @@ Bool(Command) command(std::istream& in) {
         }
 
         if (s == "showall") {
-            return Pair(true, Command::ShowAll);
+            return std::make_pair(true, Command::ShowAll);
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
 
     } else {
-        return Pair(false, Command::Quit);
+        return std::make_pair(false, Command::Quit);
     }
 }
 
-Bool(Statement*) statement(std::istream& in) {
-    Bool(Expression*) e;
-    Bool(std::string) i;
-    Bool(StatementOperation) op;
-    Bool(Command) c;
+std::pair<bool, Statement*> statement(std::istream& in) {
+    std::pair<bool, Expression*> e;
+    std::pair<bool, std::string> i;
+    std::pair<bool, StatementOperation> op;
+    std::pair<bool, Command> c;
 
     if (in.peek() == ':') {
         in.get();
@@ -973,7 +1012,7 @@ Bool(Statement*) statement(std::istream& in) {
         if ((c = command(in)).first) {
             space(in);
 
-            return Pair(true, new CommandStatement(c.second));
+            return std::make_pair(true, new CommandStatement(c.second));
         } else if (in.peek() == 'd') {
             std::string s;
             
@@ -988,18 +1027,18 @@ Bool(Statement*) statement(std::istream& in) {
                     space(in);
 
                     if (end(in)) {
-                        return Pair(true, new DropStatement(i.second));
+                        return std::make_pair(true, new DropStatement(i.second));
                     } else {
-                        throw ParseError();
+                        throw ParseError(in.tellg());
                     }
                 } else {
-                    throw ParseError();
+                    throw ParseError(in.tellg());
                 }
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else if (in.peek() == '[') {
         in.get();
@@ -1030,35 +1069,35 @@ Bool(Statement*) statement(std::istream& in) {
                         if (end(in)) {
                             switch(op.second) {
                             case StatementOperation::StoreTable:
-                                return Pair(true, new StoreStatement(i.second, e.second));
+                                return std::make_pair(true, new StoreStatement(i.second, e.second));
                             case StatementOperation::CreateView:
-                                return Pair(true, new AssignStatement(i.second, exp));
+                                return std::make_pair(true, new AssignStatement(i.second, exp));
                             }
                         } else {
                             delete e.second;
-                            throw ParseError();
+                            throw ParseError(in.tellg());
                         }
                     } else {
-                        throw ParseError();
+                        throw ParseError(in.tellg());
                     }
                 } else {
-                    throw ParseError();
+                    throw ParseError(in.tellg());
                 }
             } else {
-                throw ParseError();
+                throw ParseError(in.tellg());
             }
         } else {
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else if ((e = expression(in)).first) {
         if (end(in)) {
-            return Pair(true, new ExpressionStatement(e.second));
+            return std::make_pair(true, new ExpressionStatement(e.second));
         } else {
             delete e.second;
             
-            throw ParseError();
+            throw ParseError(in.tellg());
         }
     } else {
-        return Pair(false, nullptr);
+        return std::make_pair(false, nullptr);
     }
 }
