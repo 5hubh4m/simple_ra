@@ -16,7 +16,7 @@ all : $(MAIN)
 $(MAIN) : $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
-%.o : %.cpp
+%.o : %.cpp %.hpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean :
