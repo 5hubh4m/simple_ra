@@ -14,6 +14,8 @@ using namespace RelationalAlgebra;
 Database RelationalAlgebra::database;
 
 int main (void) {
+    rl_init();
+    
     std::unique_ptr<Statement> stmt;
 
     std::cout << "************************************************************" << std::endl
@@ -82,6 +84,36 @@ std::string RelationalAlgebra::rl_gets(void) {
     }
 
     return l;
+}
+
+void RelationalAlgebra::rl_init(void) {
+    rl_attempted_completion_function = completion;    
+}
+
+char** RelationalAlgebra::completion(const char *text, int start, int end) {
+    if (start >= 0 && end >= 0) {
+        rl_attempted_completion_over = 1;
+    }
+    
+    return rl_completion_matches(text, completion_generator);
+}
+
+char* RelationalAlgebra::completion_generator(const char *text, int state) {
+    static int list_index, len;
+    const char *name;
+
+    if (!state) {
+        list_index = 0;
+        len = strlen(text);
+    }
+
+    while ((name = completion_names[list_index++])) {
+        if (strncmp(name, text, len) == 0) {
+            return strdup(name);
+        }
+    }
+
+    return nullptr;
 }
 
 void RelationalAlgebra::print_help(void) {

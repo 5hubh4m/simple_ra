@@ -26,6 +26,16 @@ namespace RelationalAlgebra {
         // Construct the database
         Database ();
 
+        // Get a list of table and view names for completion
+        const std::vector<std::string>& getTableList(void) {
+            return table_list;
+        }
+
+        const std::map<std::string, std::string>& getViewList(void) {
+            return views;
+        }
+
+
         // Retrieve table by name
         Table operator [] (const std::string&) const;
 
