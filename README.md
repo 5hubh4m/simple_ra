@@ -86,7 +86,7 @@ Some example queries have been given below.
 
 __Explanation__: It then assigns the `min_eng` with the view containing the `s_id`s of the `student`s with minimum marks in `eng`.
 
-`(student @ min_eng) @ department;` will give all the details of the student with minimum marks in english. The result of the query will change in accordance with the original data.
+`student @ min_eng @ department;` will give all the details of the student with minimum marks in english. The result of the query will change in accordance with the original data.
 
 Other queries have been given in file `queries.sra`. Formal syntax is defined in EBNF form in `syntax.ebnf`.
 
@@ -101,7 +101,3 @@ The following utility commands are available
 > `:drop table_ name;` : Drop the table with specified name
 
 > `:showall;` : Show the basic information of the whole database, i.e the schema and no. of tuples of all tables and description of all views.
-
-### Caveats
-
-* The maximum length of any `string`(`identifier` or `value`) is `100 bytes`.

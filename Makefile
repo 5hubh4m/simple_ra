@@ -22,5 +22,5 @@ $(MAIN) : $(OBJS)
 clean :
 	$(RM) *.o *~ $(MAIN) .data* *.dSYM
 
-run :
+run : $(MAIN)
 	@./$(MAIN)

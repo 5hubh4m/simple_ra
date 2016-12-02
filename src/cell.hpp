@@ -21,20 +21,12 @@ namespace RelationalAlgebra {
     struct Data {
         int i;
         float f;
-        char s[100];
+        std::string s;
 
         Data() {}
         Data(int i) : i(i) {}
         Data(float f) : f(f) {}
-        Data(const std::string& str) {
-            size_t j = 0;
-
-            for (j = 0; j < 99 && j < str.length() ; j++) {
-                s[j] = str[j];
-            }
-
-            s[j] = '\0';
-        } 
+        Data(const std::string& str) : s(str) {} 
     };
 
     /* Cell Class

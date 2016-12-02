@@ -63,7 +63,7 @@ Tuple Table::operator [] (size_t idx) const {
     while (idx--)
         ++it;
 
-    return *it;
+    return (*it);
 }
 
 Table Table::operator + (const Table& t) {
@@ -75,7 +75,7 @@ Table Table::operator + (const Table& t) {
 
     table.insert(t.begin(), t.end());
 
-    return(*this);
+    return (*this);
 }
 
 void Table::operator += (const Tuple& t) {
@@ -95,7 +95,7 @@ Table Table::operator - (const Table& t) {
     for (auto& row : t)
         table.erase(row);
 
-    return(*this);
+    return (*this);
 }
 
 Table Table::operator * (const Table& t) {
@@ -129,7 +129,7 @@ Table Table::operator * (const Table& t) {
         table = new_table;
     }
 
-    return(*this);
+    return (*this);
 }
 
 Table Table::select(Predicate* p) {
@@ -142,7 +142,7 @@ Table Table::select(Predicate* p) {
 
     table = new_table;
 
-    return(*this);
+    return (*this);
 }
 
 Table Table::project(const std::vector< std::string >& col_names) {
@@ -217,14 +217,14 @@ Table Table::project(const std::vector< std::string >& col_names) {
         table = new_table;
     }
 
-    return(*this);
+    return (*this);
 }
 
 Table Table::rename(const std::vector< std::string >& new_names) {
     for (size_t i = 0 ; i < new_names.size() && i < schema.size(); i++)
         schema[i].first = new_names[i];
 
-    return(*this);
+    return (*this);
 }
 
 Table Table::min(const std::string& col) const {
