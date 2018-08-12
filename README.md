@@ -66,7 +66,7 @@ Here, a `value` is either a column name or a value. Operating on two values of d
 
 The binary operations are right associative and precedence of all operations is the same.
 
-###Example
+### Example
 
 Some example queries have been given below.
 
